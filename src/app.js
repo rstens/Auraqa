@@ -84,6 +84,7 @@ export function createApp(repository) {
 
       sendHtml(response, 404, "Not found");
     } catch (error) {
+      console.error("Request handling failed", error);
       sendHtml(response, 500, "Internal server error");
     }
   });

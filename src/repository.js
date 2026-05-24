@@ -2,13 +2,14 @@ import { Pool } from "pg";
 
 export function createInMemoryRepository() {
   const items = [];
+  let nextId = 1;
   return {
     async init() {},
     async listQuestions() {
       return [...items].sort((a, b) => b.id - a.id);
     },
     async addQuestion(question) {
-      items.push({ id: items.length + 1, question });
+      items.push({ id: nextId++, question });
     },
     async close() {}
   };

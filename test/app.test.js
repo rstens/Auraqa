@@ -4,12 +4,13 @@ import { createApp } from "../src/app.js";
 
 function createStubRepository(initial = []) {
   const items = [...initial];
+  let nextId = items.length + 1;
   return {
     async listQuestions() {
       return [...items].sort((a, b) => b.id - a.id);
     },
     async addQuestion(question) {
-      items.push({ id: items.length + 1, question });
+      items.push({ id: nextId++, question });
     }
   };
 }
@@ -51,6 +52,23 @@ test("POST /api/questions stores and escapes question text", async () => {
     const body = await response.text();
     assert.equal(response.status, 200);
     assert.match(body, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
-    assert.doesNotMatch(body, /<script>/);
+    assert.equal(body.toLowerCase().includes("<script>"), false);
+  });
+});
+
+test("POST /api/questions ignores whitespace-only values", async () => {
+  const repository = createStubRepository([{ id: 1, question: "Existing" }]);
+
+  await withServer(repository, async (port) => {
+    const response = await fetch(`http://127.0.0.1:${port}/api/questions`, {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: "question=%20%20%20"
+    });
+
+    const body = await response.text();
+    assert.equal(response.status, 200);
+    assert.match(body, /<li>Existing<\/li>/);
+    assert.equal((body.match(/<li>/g) ?? []).length, 1);
   });
 });
