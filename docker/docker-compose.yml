@@ -1,0 +1,57 @@
+###############################################################################
+# AuraQA Docker Compose — Full Stack
+#
+# Services:
+#   app  — Next.js application (port 3000)
+#   db   — PostgreSQL 18 database (port 5432)
+#
+# Usage:
+#   Production:  docker compose -f docker/docker-compose.yml up -d
+#   Development: docker compose -f docker/docker-compose.yml \
+#                               -f docker/docker-compose.dev.yml up
+#
+# @see docs/DEPLOYMENT.md for production deployment guide
+# @see docs/DEVELOPMENT.md for local development setup
+###############################################################################
+
+services:
+  db:
+    image: postgres:18
+    container_name: auraqa-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: auraqa
+      POSTGRES_USER: auraqa
+      POSTGRES_PASSWORD: auraqa_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U auraqa -d auraqa"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: auraqa-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://auraqa:auraqa_password@db:5432/auraqa
+      NEXTAUTH_URL: http://localhost:3000
+      NODE_ENV: production
+    env_file:
+      - ../.env.local
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+    driver: local
