@@ -4,6 +4,8 @@
  * Lists all forum categories with descriptions and thread counts.
  */
 
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { db } from "@/db";
 import { forumCategories, forumThreads } from "@/db/schema";
