@@ -25,6 +25,26 @@ export default async function LoginPage() {
         </div>
 
         <div className="space-y-3">
+          {process.env.NODE_ENV !== "production" && (
+            <form
+              action={async () => {
+                "use server";
+                await signIn("credentials", {
+                  email: "dev@auraqa.local",
+                  name: "Dev User",
+                  redirectTo: "/",
+                });
+              }}
+            >
+              <button
+                type="submit"
+                className="flex w-full items-center justify-center gap-3 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
+              >
+                Dev Login (auto)
+              </button>
+            </form>
+          )}
+
           <form
             action={async () => {
               "use server";

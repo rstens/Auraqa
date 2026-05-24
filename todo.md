@@ -157,7 +157,7 @@ The lockfile was deleted during troubleshooting and regenerated. Verify it's cor
 | 6 | Vuln: postcss XSS (in next) | P2 | Wait | BLOCKED |
 | 7 | Vuln: esbuild dev server (in drizzle-kit) | P2 | Wait | BLOCKED |
 | 8 | Add engines field | P3 | Trivial | **DONE** |
-| 9 | Pin next-auth version | P3 | Trivial | TODO |
+| 9 | Pin next-auth version | P3 | Trivial | **DONE** |
 | 10 | Regenerate lockfile | P3 | Low | **ACTION REQUIRED** — after Node.js upgrade |
 
 **Remaining**: Upgrade Node.js to >=20.19.0, then `npm install` + `npm run test` to verify tests work.
