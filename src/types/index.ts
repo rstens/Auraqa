@@ -45,24 +45,24 @@ export type Vote = InferSelectModel<typeof votes>;
 
 /** Article with author info for display. */
 export type ArticleWithAuthor = Article & {
-  author: Pick<User, "id" | "username" | "displayName" | "avatarUrl">;
+  author: Pick<User, "id" | "username" | "name" | "image">;
   tags: Tag[];
 };
 
 /** Forum thread with author and category info for display. */
 export type ThreadWithAuthor = ForumThread & {
-  author: Pick<User, "id" | "username" | "displayName" | "avatarUrl">;
+  author: Pick<User, "id" | "username" | "name" | "image">;
   category: Pick<ForumCategory, "name" | "slug">;
   tags: Tag[];
 };
 
 /** Forum reply with author info for display. */
 export type ReplyWithAuthor = ForumReply & {
-  author: Pick<User, "id" | "username" | "displayName" | "avatarUrl">;
+  author: Pick<User, "id" | "username" | "name" | "image">;
 };
 
 /** Tool with author info and tags for display. */
 export type ToolWithDetails = Tool & {
-  submitter: Pick<User, "id" | "username" | "displayName" | "avatarUrl">;
+  submitter: Pick<User, "id" | "username" | "name" | "image">;
   tags: Tag[];
 };
