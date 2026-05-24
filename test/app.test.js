@@ -39,6 +39,22 @@ test("GET / returns htmx page with list", async () => {
   });
 });
 
+test("GET /assets/htmx.min.js serves local htmx script", async () => {
+  const repository = createStubRepository();
+
+  await withServer(repository, async (port) => {
+    const response = await fetch(`http://127.0.0.1:${port}/assets/htmx.min.js`);
+    const body = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.equal(
+      response.headers.get("content-type"),
+      "application/javascript; charset=utf-8"
+    );
+    assert.match(body, /htmx/);
+  });
+});
+
 test("POST /api/questions stores and escapes question text", async () => {
   const repository = createStubRepository();
 

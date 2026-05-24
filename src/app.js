@@ -1,4 +1,8 @@
 import http from "node:http";
+import { readFile } from "node:fs/promises";
+
+const htmxAsset = new URL("../node_modules/htmx.org/dist/htmx.min.js", import.meta.url);
+const htmxAssetPromise = readFile(htmxAsset, "utf8");
 
 function escapeHtml(value) {
   return value
@@ -26,7 +30,7 @@ function renderPage(questionItemsHtml) {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Auraqa</title>
-    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <script src="/assets/htmx.min.js"></script>
   </head>
   <body>
     <main>
@@ -55,12 +59,24 @@ function sendHtml(response, statusCode, body) {
   response.end(body);
 }
 
+function sendJs(response, statusCode, body) {
+  response.writeHead(statusCode, {
+    "content-type": "application/javascript; charset=utf-8"
+  });
+  response.end(body);
+}
+
 export function createApp(repository) {
   return http.createServer(async (request, response) => {
     try {
       if (request.method === "GET" && request.url === "/") {
         const questions = await repository.listQuestions();
         sendHtml(response, 200, renderPage(renderQuestionItems(questions)));
+        return;
+      }
+
+      if (request.method === "GET" && request.url === "/assets/htmx.min.js") {
+        sendJs(response, 200, await htmxAssetPromise);
         return;
       }
 
