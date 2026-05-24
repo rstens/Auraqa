@@ -33,14 +33,16 @@ import {
 
 /**
  * User accounts. Created on first OAuth login.
- * Reputation is earned through community contributions.
+ * Includes NextAuth-required columns (name, email, emailVerified, image)
+ * plus AuraQA-specific columns (username, bio, reputation, role).
  */
 export const users = pgTable("users", {
   id: uuid("id").primaryKey(),
+  name: text("name"),
   email: text("email").unique(),
-  username: text("username").unique().notNull(),
-  displayName: text("display_name"),
-  avatarUrl: text("avatar_url"),
+  emailVerified: timestamp("emailVerified", { mode: "date" }),
+  image: text("image"),
+  username: text("username").unique(),
   bio: text("bio").default(""),
   reputation: integer("reputation").notNull().default(0),
   role: text("role").notNull().default("user"),
@@ -50,32 +52,33 @@ export const users = pgTable("users", {
 
 /**
  * OAuth provider accounts linked to users (NextAuth Drizzle adapter).
+ * Column names must match NextAuth's expected snake_case format.
  */
 export const accounts = pgTable("accounts", {
   id: uuid("id").primaryKey(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
   type: text("type").notNull(),
   provider: text("provider").notNull(),
-  providerAccountId: text("provider_account_id").notNull(),
-  refreshToken: text("refresh_token"),
-  accessToken: text("access_token"),
-  expiresAt: integer("expires_at"),
-  tokenType: text("token_type"),
+  providerAccountId: text("providerAccountId").notNull(),
+  refresh_token: text("refresh_token"),
+  access_token: text("access_token"),
+  expires_at: integer("expires_at"),
+  token_type: text("token_type"),
   scope: text("scope"),
-  idToken: text("id_token"),
-  sessionState: text("session_state"),
+  id_token: text("id_token"),
+  session_state: text("session_state"),
 }, (table) => [
-  unique("provider_provider_account_id_unique").on(table.provider, table.providerAccountId),
+  unique("provider_providerAccountId_unique").on(table.provider, table.providerAccountId),
 ]);
 
 /**
  * User sessions for NextAuth.
+ * sessionToken is the primary key as required by the adapter.
  */
 export const sessions = pgTable("sessions", {
-  id: uuid("id").primaryKey(),
-  sessionToken: text("session_token").unique().notNull(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  expires: timestamp("expires", { withTimezone: true }).notNull(),
+  sessionToken: text("sessionToken").primaryKey(),
+  userId: uuid("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  expires: timestamp("expires", { mode: "date" }).notNull(),
 });
 
 /**
@@ -84,7 +87,7 @@ export const sessions = pgTable("sessions", {
 export const verificationTokens = pgTable("verification_tokens", {
   identifier: text("identifier").notNull(),
   token: text("token").notNull(),
-  expires: timestamp("expires", { withTimezone: true }).notNull(),
+  expires: timestamp("expires", { mode: "date" }).notNull(),
 }, (table) => [
   unique("verification_tokens_identifier_token").on(table.identifier, table.token),
 ]);
