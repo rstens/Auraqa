@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "AuraQA — A community platform for software testers: knowledge articles, forums, and testing tools directory",
   "private": true,
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",

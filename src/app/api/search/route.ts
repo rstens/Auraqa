@@ -10,7 +10,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { articles, forumThreads, tools } from "@/db/schema";
-import { eq, or, ilike, desc } from "drizzle-orm";
+import { and, eq, or, ilike, desc } from "drizzle-orm";
 import { searchQuerySchema } from "@/lib/validators";
 
 export async function GET(request: NextRequest) {
@@ -138,6 +138,5 @@ function and2(...conditions: (ReturnType<typeof eq> | ReturnType<typeof or> | un
   const defined = conditions.filter(Boolean);
   if (defined.length === 0) return undefined;
   if (defined.length === 1) return defined[0];
-  const { and } = require("drizzle-orm");
   return and(...defined);
 }

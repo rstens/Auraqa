@@ -1,13 +1,6 @@
-/**
- * Search results page.
- *
- * Client component that fetches search results from the API
- * and displays them with type tabs.
- */
-
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { Suspense, useState, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -19,13 +12,14 @@ type SearchResult = {
   url: string;
 };
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const initialQuery = searchParams.get("q") ?? "";
   const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false);
 
   const doSearch = useCallback(async (q: string) => {
     if (!q.trim()) {
@@ -41,12 +35,13 @@ export default function SearchPage() {
       }
     } finally {
       setLoading(false);
+      setSearched(true);
     }
   }, []);
 
-  useEffect(() => {
-    if (initialQuery) doSearch(initialQuery);
-  }, [initialQuery, doSearch]);
+  if (initialQuery && !searched && !loading) {
+    doSearch(initialQuery);
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -85,7 +80,7 @@ export default function SearchPage() {
       <div className="mt-8">
         {loading ? (
           <p className="text-center text-slate-500 dark:text-slate-400">Searching...</p>
-        ) : results.length === 0 && initialQuery ? (
+        ) : results.length === 0 && searched ? (
           <p className="text-center text-slate-500 dark:text-slate-400">
             No results found for &ldquo;{initialQuery}&rdquo;
           </p>
@@ -116,5 +111,18 @@ export default function SearchPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Search</h1>
+        <p className="mt-6 text-center text-slate-500 dark:text-slate-400">Loading...</p>
+      </div>
+    }>
+      <SearchContent />
+    </Suspense>
   );
 }

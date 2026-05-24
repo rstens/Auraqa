@@ -11,10 +11,8 @@ import { useRouter } from "next/navigation";
 
 export function ThreadForm({
   categoryId,
-  categorySlug,
 }: {
   categoryId: number;
-  categorySlug: string;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);

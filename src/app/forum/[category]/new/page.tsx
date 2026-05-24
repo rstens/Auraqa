@@ -35,7 +35,7 @@ export default async function NewThreadPage({
         New Thread in {cat.name}
       </h1>
       <div className="mt-8">
-        <ThreadForm categoryId={cat.id} categorySlug={categorySlug} />
+        <ThreadForm categoryId={cat.id} />
       </div>
     </div>
   );
