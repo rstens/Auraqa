@@ -45,14 +45,15 @@ export function ReplyForm({ threadId }: { threadId: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form data-testid="reply-form" onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+        <div data-testid="reply-form-error" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
           {error}
         </div>
       )}
 
       <textarea
+        data-testid="reply-content"
         name="content"
         required
         rows={5}
@@ -61,6 +62,7 @@ export function ReplyForm({ threadId }: { threadId: string }) {
       />
 
       <button
+        data-testid="reply-submit-button"
         type="submit"
         disabled={loading}
         className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"

@@ -24,6 +24,7 @@
     "@anthropic-ai/sdk": "^0.98.0",
     "@auth/core": "^0.41.2",
     "@auth/drizzle-adapter": "^1.11.2",
+    "@tailwindcss/typography": "^0.5.19",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.2",
     "next": "16.2.6",
@@ -36,7 +37,10 @@
     "remark": "^15.0.1",
     "remark-gfm": "^4.0.1",
     "remark-html": "^16.0.1",
+    "remark-parse": "^11.0.0",
+    "remark-rehype": "^11.1.2",
     "tailwind-merge": "^3.6.0",
+    "unified": "^11.0.5",
     "uuidv7": "^1.2.1",
     "zod": "^4.4.3"
   },
@@ -56,5 +60,11 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.7"
-  }
+  },
+  "browserslist": [
+    "last 2 Chrome versions",
+    "last 2 Firefox versions",
+    "last 2 Safari versions",
+    "last 2 Edge versions"
+  ]
 }

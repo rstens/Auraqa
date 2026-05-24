@@ -9,20 +9,20 @@
  * HTML is generated server-side at render time.
  */
 
-import { remark } from "remark";
+import { unified } from "unified";
+import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
-import remarkHtml from "remark-html";
+import remarkRehype from "remark-rehype";
+import rehypeHighlight from "rehype-highlight";
+import rehypeStringify from "rehype-stringify";
 
-/**
- * Convert Markdown string to sanitized HTML.
- *
- * @param markdown - Raw Markdown content
- * @returns HTML string safe for rendering
- */
 export async function renderMarkdown(markdown: string): Promise<string> {
-  const result = await remark()
+  const result = await unified()
+    .use(remarkParse)
     .use(remarkGfm)
-    .use(remarkHtml, { sanitize: true })
+    .use(remarkRehype)
+    .use(rehypeHighlight)
+    .use(rehypeStringify)
     .process(markdown);
 
   return result.toString();

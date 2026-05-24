@@ -11,7 +11,7 @@ export default function Home() {
   return (
     <div className="flex flex-col">
       {/* Hero */}
-      <section className="bg-gradient-to-b from-slate-50 to-white px-4 py-20 text-center dark:from-slate-950 dark:to-slate-900 sm:py-28">
+      <section data-testid="hero-section" className="bg-gradient-to-b from-slate-50 to-white px-4 py-20 text-center dark:from-slate-950 dark:to-slate-900 sm:py-28">
         <h1 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-6xl">
           The QA Community
           <br />
@@ -24,12 +24,14 @@ export default function Home() {
         <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
           <Link
             href="/forum"
+            data-testid="hero-cta-forum"
             className="rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-700"
           >
             Join the Discussion
           </Link>
           <Link
             href="/articles"
+            data-testid="hero-cta-articles"
             className="rounded-lg border border-slate-300 px-6 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
           >
             Browse Articles
@@ -38,7 +40,7 @@ export default function Home() {
       </section>
 
       {/* Feature cards */}
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+      <section data-testid="features-section" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <h2 className="text-center text-2xl font-bold text-slate-900 dark:text-white">
           Everything You Need
         </h2>
@@ -68,7 +70,7 @@ export default function Home() {
       </section>
 
       {/* AI feature highlight */}
-      <section className="border-t border-slate-200 bg-slate-50 px-4 py-16 dark:border-slate-700 dark:bg-slate-900">
+      <section data-testid="ai-features-section" className="border-t border-slate-200 bg-slate-50 px-4 py-16 dark:border-slate-700 dark:bg-slate-900">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
             AI-Powered Features

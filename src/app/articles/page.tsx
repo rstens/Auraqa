@@ -35,7 +35,7 @@ export default async function ArticlesPage() {
     .limit(20);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+    <div data-testid="articles-page" className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
@@ -47,15 +47,16 @@ export default async function ArticlesPage() {
         </div>
         <Link
           href="/articles/new"
+          data-testid="write-article-link"
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
         >
           Write Article
         </Link>
       </div>
 
-      <div className="mt-8 space-y-4">
+      <div data-testid="articles-list" className="mt-8 space-y-4">
         {articleList.length === 0 ? (
-          <p className="py-12 text-center text-slate-500 dark:text-slate-400">
+          <p data-testid="articles-empty" className="py-12 text-center text-slate-500 dark:text-slate-400">
             No articles yet. Be the first to write one!
           </p>
         ) : (
@@ -90,6 +91,7 @@ function ArticleCard({
   return (
     <Link
       href={`/articles/${article.slug}`}
+      data-testid={`article-card-${article.slug}`}
       className="block rounded-lg border border-slate-200 bg-white p-6 transition-all hover:border-slate-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600"
     >
       <h2 className="text-xl font-semibold text-slate-900 dark:text-white">

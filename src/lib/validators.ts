@@ -46,6 +46,26 @@ export const createToolSchema = z.object({
   tags: z.array(z.string()).max(10).optional(),
 });
 
+/** Schema for admin updating a tool. */
+export const updateToolSchema = createToolSchema.partial().extend({
+  status: z.enum(["pending", "approved", "rejected"]).optional(),
+});
+
+/** Schema for changing a user's role. */
+export const updateUserRoleSchema = z.object({
+  role: z.enum(["user", "admin"]),
+});
+
+/** Schema for admin AI action on an article. */
+export const adminAiActionSchema = z.object({
+  action: z.enum(["summarize", "suggest-tags"]),
+});
+
+/** Schema for admin AI suggest-answer. */
+export const adminSuggestAnswerSchema = z.object({
+  threadId: z.string().uuid(),
+});
+
 /** Schema for creating a tool review. */
 export const createReviewSchema = z.object({
   rating: z.number().int().min(1).max(5),

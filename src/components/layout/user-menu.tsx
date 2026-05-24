@@ -29,7 +29,7 @@ export function UserMenu() {
 
   if (status === "loading") {
     return (
-      <div className="h-8 w-8 animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
+      <div data-testid="user-menu-loading" className="h-8 w-8 animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
     );
   }
 
@@ -37,6 +37,7 @@ export function UserMenu() {
     return (
       <Link
         href="/login"
+        data-testid="sign-in-link"
         className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
       >
         Sign In
@@ -47,6 +48,7 @@ export function UserMenu() {
   return (
     <div className="relative" ref={menuRef}>
       <button
+        data-testid="user-menu-button"
         onClick={() => setOpen(!open)}
         className="flex items-center gap-2 rounded-full transition-opacity hover:opacity-80"
       >
@@ -66,7 +68,7 @@ export function UserMenu() {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-48 rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
+        <div data-testid="user-menu-dropdown" className="absolute right-0 mt-2 w-48 rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
           <div className="border-b border-slate-200 px-4 py-2 dark:border-slate-700">
             <p className="text-sm font-medium text-slate-900 dark:text-white">
               {session.user.name}
@@ -77,6 +79,7 @@ export function UserMenu() {
           </div>
           <Link
             href={`/profile/${session.user.name}`}
+            data-testid="user-menu-profile"
             className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
             onClick={() => setOpen(false)}
           >
@@ -84,12 +87,24 @@ export function UserMenu() {
           </Link>
           <Link
             href="/profile/settings"
+            data-testid="user-menu-settings"
             className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
             onClick={() => setOpen(false)}
           >
             Settings
           </Link>
+          {(session.user as unknown as Record<string, unknown>).role === "admin" && (
+            <Link
+              href="/admin"
+              data-testid="user-menu-admin"
+              className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+              onClick={() => setOpen(false)}
+            >
+              Admin
+            </Link>
+          )}
           <button
+            data-testid="sign-out-button"
             onClick={() => signOut({ callbackUrl: "/" })}
             className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-slate-100 dark:text-red-400 dark:hover:bg-slate-700"
           >

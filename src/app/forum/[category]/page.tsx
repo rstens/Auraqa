@@ -47,7 +47,7 @@ export default async function CategoryPage({
     .limit(50);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+    <div data-testid="forum-category-page" className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex items-center justify-between">
         <div>
           <Link href="/forum" className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400">
@@ -62,15 +62,16 @@ export default async function CategoryPage({
         </div>
         <Link
           href={`/forum/${categorySlug}/new`}
+          data-testid="new-thread-link"
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
         >
           New Thread
         </Link>
       </div>
 
-      <div className="mt-8 space-y-2">
+      <div data-testid="threads-list" className="mt-8 space-y-2">
         {threads.length === 0 ? (
-          <p className="py-12 text-center text-slate-500 dark:text-slate-400">
+          <p data-testid="threads-empty" className="py-12 text-center text-slate-500 dark:text-slate-400">
             No threads yet. Start a discussion!
           </p>
         ) : (
@@ -78,6 +79,7 @@ export default async function CategoryPage({
             <Link
               key={thread.id}
               href={`/forum/thread/${thread.id}`}
+              data-testid={`thread-card-${thread.id}`}
               className="flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-4 transition-all hover:border-slate-300 hover:shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600"
             >
               {thread.isPinned && (
@@ -86,9 +88,9 @@ export default async function CategoryPage({
                 </span>
               )}
               <div className="flex-1">
-                <h3 className="font-medium text-slate-900 dark:text-white">
+                <h2 className="font-medium text-slate-900 dark:text-white">
                   {thread.title}
-                </h3>
+                </h2>
                 <div className="mt-1 flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
                   <span>{thread.authorName ?? thread.authorUsername ?? "Anonymous"}</span>
                   <span>{timeAgo(thread.lastReplyAt ?? thread.createdAt)}</span>

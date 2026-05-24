@@ -1,15 +1,3 @@
-/**
- * NextAuth.js configuration for AuraQA.
- *
- * Supports GitHub and Google OAuth providers with Drizzle adapter
- * for persisting users, accounts, and sessions in PostgreSQL 18.
- *
- * After first OAuth login, users are assigned a username derived from
- * their provider profile (email prefix or provider username).
- *
- * @see docs/ARCHITECTURE.md for auth flow details
- */
-
 import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
@@ -22,13 +10,44 @@ import { uuidv7 } from "uuidv7";
 
 const isDev = process.env.NODE_ENV !== "production";
 
-const devProvider = Credentials({
-  name: "Dev Login",
+const credentialsProvider = Credentials({
+  name: "Credentials",
   credentials: {
+    username: { label: "Username", type: "text" },
+    password: { label: "Password", type: "password" },
     email: { label: "Email", type: "email" },
     name: { label: "Name", type: "text" },
   },
   async authorize(credentials) {
+    const username = credentials.username as string | undefined;
+    const password = credentials.password as string | undefined;
+
+    // Admin login — available in all environments
+    if (username === "admin" && password === "admin") {
+      const existing = await db
+        .select()
+        .from(users)
+        .where(eq(users.username, "admin"))
+        .limit(1);
+
+      if (existing.length > 0) {
+        return { id: existing[0].id, email: existing[0].email, name: existing[0].name };
+      }
+
+      const id = uuidv7();
+      await db.insert(users).values({
+        id,
+        email: "admin@auraqa.local",
+        name: "Admin",
+        username: "admin",
+        bio: "",
+        reputation: 0,
+        role: "admin",
+      });
+      return { id, email: "admin@auraqa.local", name: "Admin" };
+    }
+
+    // Dev quick-login — dev only
     if (!isDev) return null;
     const email = (credentials.email as string) || "dev@auraqa.local";
     const name = (credentials.name as string) || "Dev User";
@@ -44,12 +63,12 @@ const devProvider = Credentials({
     }
 
     const id = uuidv7();
-    const username = email.split("@")[0];
+    const uname = email.split("@")[0];
     await db.insert(users).values({
       id,
       email,
       name,
-      username,
+      username: uname,
       bio: "",
       reputation: 0,
       role: "user",
@@ -67,7 +86,7 @@ const providers = [
     clientId: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
   }),
-  ...(isDev ? [devProvider] : []),
+  credentialsProvider,
 ];
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -79,21 +98,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   }),
   providers,
   session: {
-    // Credentials provider requires JWT — database sessions aren't
-    // persisted for credentials sign-ins in Auth.js v5.
-    strategy: isDev ? "jwt" : "database",
+    strategy: "jwt",
   },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        const dbUser = await db
+          .select({ role: users.role })
+          .from(users)
+          .where(eq(users.id, user.id!))
+          .limit(1);
+        token.role = dbUser[0]?.role ?? "user";
       }
       return token;
     },
-    session({ session, user, token }) {
+    session({ session, token }) {
       if (session.user) {
-        // JWT mode (dev): id comes from token. Database mode (prod): from user.
-        session.user.id = (user?.id ?? token?.id) as string;
+        session.user.id = token.id as string;
+        (session.user as unknown as Record<string, unknown>).role = token.role as string;
       }
       return session;
     },
@@ -114,3 +137,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: "/login",
   },
 });
+
+export async function isAdmin(): Promise<boolean> {
+  const session = await auth();
+  return (session?.user as Record<string, unknown> | undefined)?.role === "admin";
+}
