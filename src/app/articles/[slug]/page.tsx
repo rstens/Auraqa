@@ -6,7 +6,7 @@
  */
 
 import { db } from "@/db";
-import { articles, users } from "@/db/schema";
+import { articles, users, articleTags, tags } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { renderMarkdown } from "@/lib/markdown";
@@ -53,6 +53,13 @@ export default async function ArticlePage({
   if (article.status !== "published" && !isAuthor && !admin) notFound();
 
   const contentHtml = await renderMarkdown(article.content);
+  const aiSummaryHtml = article.aiSummary ? await renderMarkdown(article.aiSummary) : null;
+
+  const articleTagList = await db
+    .select({ name: tags.name })
+    .from(articleTags)
+    .innerJoin(tags, eq(articleTags.tagId, tags.id))
+    .where(eq(articleTags.articleId, article.id));
 
   return (
     <div data-testid="article-detail" className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
@@ -82,14 +89,25 @@ export default async function ArticlePage({
           <span>{article.viewCount} views</span>
         </div>
 
-        {article.aiSummary && (
+        {articleTagList.length > 0 && (
+          <div data-testid="article-tags" className="mt-3 flex flex-wrap gap-2">
+            {articleTagList.map((tag) => (
+              <span key={tag.name} className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                {tag.name}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {aiSummaryHtml && (
           <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
             <p className="text-xs font-medium text-blue-700 dark:text-blue-400">
               AI Summary
             </p>
-            <p className="mt-1 text-sm text-blue-900 dark:text-blue-200">
-              {article.aiSummary}
-            </p>
+            <div
+              className="prose prose-sm mt-1 max-w-none text-blue-900 dark:text-blue-200"
+              dangerouslySetInnerHTML={{ __html: aiSummaryHtml }}
+            />
           </div>
         )}
 

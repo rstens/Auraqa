@@ -33,8 +33,10 @@ export function ToolSubmitForm() {
       });
 
       if (!res.ok) {
-        const body = await res.json();
-        throw new Error(body.error ?? "Failed to submit tool");
+        const text = await res.text();
+        let message = "Failed to submit tool";
+        try { message = JSON.parse(text).error ?? message; } catch {}
+        throw new Error(message);
       }
 
       const tool = await res.json();

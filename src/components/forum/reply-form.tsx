@@ -31,8 +31,10 @@ export function ReplyForm({ threadId }: { threadId: string }) {
       });
 
       if (!res.ok) {
-        const body = await res.json();
-        throw new Error(body.error ?? "Failed to post reply");
+        const text = await res.text();
+        let message = "Failed to post reply";
+        try { message = JSON.parse(text).error ?? message; } catch {}
+        throw new Error(message);
       }
 
       (e.target as HTMLFormElement).reset();

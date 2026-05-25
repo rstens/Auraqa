@@ -87,6 +87,16 @@ export const updateProfileSchema = z.object({
   bio: z.string().max(500).optional(),
 });
 
+/** Schema for creating/updating a glossary term. */
+export const glossaryTermSchema = z.object({
+  term: z.string().min(1).max(200),
+  abbreviation: z.string().max(20).nullable().optional(),
+  definition: z.string().min(1).max(5000),
+  category: z.string().min(1).max(50),
+  relatedTerms: z.array(z.string()).optional(),
+  seeAlso: z.array(z.string()).optional(),
+});
+
 /** Schema for search queries. */
 export const searchQuerySchema = z.object({
   q: z.string().min(1).max(200),

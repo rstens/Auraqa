@@ -14,7 +14,17 @@ import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
 import remarkRehype from "remark-rehype";
 import rehypeHighlight from "rehype-highlight";
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import rehypeStringify from "rehype-stringify";
+
+const sanitizeSchema = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    code: [...(defaultSchema.attributes?.code ?? []), "className"],
+    span: [...(defaultSchema.attributes?.span ?? []), "className"],
+  },
+};
 
 export async function renderMarkdown(markdown: string): Promise<string> {
   const result = await unified()
@@ -22,6 +32,7 @@ export async function renderMarkdown(markdown: string): Promise<string> {
     .use(remarkGfm)
     .use(remarkRehype)
     .use(rehypeHighlight)
+    .use(rehypeSanitize, sanitizeSchema)
     .use(rehypeStringify)
     .process(markdown);
 

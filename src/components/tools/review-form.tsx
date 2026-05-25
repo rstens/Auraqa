@@ -36,8 +36,10 @@ export function ReviewForm({ toolSlug }: { toolSlug: string }) {
       });
 
       if (!res.ok) {
-        const body = await res.json();
-        throw new Error(body.error ?? "Failed to submit review");
+        const text = await res.text();
+        let message = "Failed to submit review";
+        try { message = JSON.parse(text).error ?? message; } catch {}
+        throw new Error(message);
       }
 
       (e.target as HTMLFormElement).reset();

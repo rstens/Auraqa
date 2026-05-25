@@ -7,7 +7,7 @@
 #
 # Adds:
 #   - Source code volume mount for hot reload
-#   - Adminer database admin UI (port 8080)
+#   - Auto-applies database schema and seeds on startup
 #   - Development environment variables
 ###############################################################################
 
@@ -20,4 +20,4 @@ services:
       - ../public:/app/public
     environment:
       NODE_ENV: development
-    command: npm run dev
+    command: sh -c "npx drizzle-kit push && npx tsx src/db/seed.ts && npm run dev"

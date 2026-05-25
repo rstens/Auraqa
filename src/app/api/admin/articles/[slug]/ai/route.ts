@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { articles, tags, aiInteractions } from "@/db/schema";
+import { articles, tags, articleTags, aiInteractions } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { isAdmin, auth } from "@/lib/auth";
 import { adminAiActionSchema } from "@/lib/validators";
@@ -55,11 +55,21 @@ export async function POST(
   }
 
   if (action === "suggest-tags") {
-    const allTags = await db.select({ name: tags.name }).from(tags);
+    const allTags = await db.select({ id: tags.id, name: tags.name }).from(tags);
     const tagNames = allTags.map((t) => t.name);
     const suggested = await suggestTags(article.content, tagNames);
     if (!suggested) {
       return NextResponse.json({ error: "AI tag suggestion failed" }, { status: 502 });
+    }
+
+    for (const tagName of suggested) {
+      const match = allTags.find((t) => t.name.toLowerCase() === tagName.toLowerCase());
+      if (match) {
+        await db.insert(articleTags).values({
+          articleId: article.id,
+          tagId: match.id,
+        }).onConflictDoNothing();
+      }
     }
 
     await db.insert(aiInteractions).values({

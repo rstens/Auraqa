@@ -149,15 +149,15 @@ The lockfile was deleted during troubleshooting and regenerated. Verify it's cor
 
 | # | Issue | Severity | Effort | Status |
 |---|-------|----------|--------|--------|
-| 1 | Node.js version too old (v20.12.2) | P0 | Low (install) | **ACTION REQUIRED** — user must upgrade Node.js |
+| 1 | Node.js version too old (v20.12.2) | P0 | Low (install) | **DONE** — upgraded to v22.16.0 LTS |
 | 2 | Build fails: missing Suspense boundary | P0 | Low (code) | **DONE** |
 | 3 | ESLint: require() in search route | P1 | Trivial | **DONE** |
 | 4 | ESLint: setState in useEffect | P1 | Low | **DONE** |
 | 5 | ESLint: unused categorySlug | P1 | Trivial | **DONE** |
-| 6 | Vuln: postcss XSS (in next) | P2 | Wait | BLOCKED |
-| 7 | Vuln: esbuild dev server (in drizzle-kit) | P2 | Wait | BLOCKED |
+| 6 | Vuln: postcss XSS (in next) | P2 | Wait | BLOCKED — upstream |
+| 7 | Vuln: esbuild dev server (in drizzle-kit) | P2 | Wait | BLOCKED — upstream |
 | 8 | Add engines field | P3 | Trivial | **DONE** |
 | 9 | Pin next-auth version | P3 | Trivial | **DONE** |
-| 10 | Regenerate lockfile | P3 | Low | **ACTION REQUIRED** — after Node.js upgrade |
+| 10 | Regenerate lockfile | P3 | Low | **DONE** |
 
-**Remaining**: Upgrade Node.js to >=20.19.0, then `npm install` + `npm run test` to verify tests work.
+All actionable items complete. Only P2 items remain (waiting on upstream patches).

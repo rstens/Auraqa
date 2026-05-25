@@ -37,8 +37,10 @@ export function ThreadForm({
       });
 
       if (!res.ok) {
-        const body = await res.json();
-        throw new Error(body.error ?? "Failed to create thread");
+        const text = await res.text();
+        let message = "Failed to create thread";
+        try { message = JSON.parse(text).error ?? message; } catch {}
+        throw new Error(message);
       }
 
       const thread = await res.json();
