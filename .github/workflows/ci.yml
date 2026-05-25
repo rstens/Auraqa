@@ -27,7 +27,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: "22.x"
           cache: npm
 
       - name: Install dependencies
@@ -51,28 +51,15 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: "22.x"
           cache: npm
 
       - name: Write .env from secret
         run: echo "${{ secrets.ENV_DEV }}" > .env.local
 
-      - name: Cache Docker layers
-        uses: actions/cache@v4
-        with:
-          path: /tmp/.buildx-cache
-          key: docker-${{ runner.os }}-${{ hashFiles('docker/Dockerfile.dev', 'package-lock.json') }}
-          restore-keys: |
-            docker-${{ runner.os }}-
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
       - name: Build and start Docker services
         run: |
-          docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build \
-            --build-arg BUILDKIT_INLINE_CACHE=1
-          docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml up -d --wait
+          DOCKER_BUILDKIT=1 docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml up -d --build --wait
 
       - name: Wait for app to be ready
         run: |
