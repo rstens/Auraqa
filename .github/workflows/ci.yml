@@ -102,10 +102,12 @@ jobs:
         run: npx playwright test --reporter=list
 
       - name: Upload test results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-results
           path: test-results/
+          if-no-files-found: ignore
 
       - name: Stop Docker services
         if: always()
