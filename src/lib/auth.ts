@@ -105,11 +105,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id;
         const dbUser = await db
-          .select({ role: users.role })
+          .select({ role: users.role, username: users.username })
           .from(users)
           .where(eq(users.id, user.id!))
           .limit(1);
         token.role = dbUser[0]?.role ?? "user";
+        token.username = dbUser[0]?.username ?? null;
       }
       return token;
     },
@@ -117,6 +118,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         session.user.id = token.id as string;
         (session.user as unknown as Record<string, unknown>).role = token.role as string;
+        (session.user as unknown as Record<string, unknown>).username = token.username as string;
       }
       return session;
     },

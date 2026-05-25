@@ -80,6 +80,13 @@ export const castVoteSchema = z.object({
   value: z.union([z.literal(1), z.literal(-1)]),
 });
 
+/** Schema for updating own profile. */
+export const updateProfileSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  username: z.string().min(1).max(50).optional(),
+  bio: z.string().max(500).optional(),
+});
+
 /** Schema for search queries. */
 export const searchQuerySchema = z.object({
   q: z.string().min(1).max(200),

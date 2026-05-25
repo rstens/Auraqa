@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 export function ArticleActions({ slug, currentStatus }: { slug: string; currentStatus: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
-  const [aiResult, setAiResult] = useState<string | null>(null);
   const [suggestedTags, setSuggestedTags] = useState<string[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,10 +27,11 @@ export function ArticleActions({ slug, currentStatus }: { slug: string; currentS
         try { msg = JSON.parse(text).error ?? msg; } catch {}
         throw new Error(msg);
       }
-      const data = await res.json();
-      if (action === "ai-summarize" && data.summary) {
-        setAiResult(data.summary);
+      if (action === "delete") {
+        router.push("/admin/articles");
+        return;
       }
+      const data = await res.json();
       if (action === "ai-suggest-tags" && data.tags) {
         setSuggestedTags(data.tags);
       }
@@ -103,13 +103,6 @@ export function ArticleActions({ slug, currentStatus }: { slug: string; currentS
           {loading === "ai-suggest-tags" ? "Suggesting..." : "AI Suggest Tags"}
         </button>
       </div>
-
-      {aiResult && (
-        <div data-testid="ai-summary-result" className="rounded-lg border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-800 dark:bg-indigo-900/20">
-          <p className="text-xs font-medium text-indigo-700 dark:text-indigo-400">AI Summary</p>
-          <p className="mt-1 text-sm text-indigo-900 dark:text-indigo-200">{aiResult}</p>
-        </div>
-      )}
 
       {suggestedTags && (
         <div data-testid="ai-tags-result" className="rounded-lg border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-800 dark:bg-indigo-900/20">

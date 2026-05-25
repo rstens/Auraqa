@@ -78,7 +78,7 @@ export function UserMenu() {
             </p>
           </div>
           <Link
-            href={`/profile/${session.user.name}`}
+            href={`/profile/${(session.user as unknown as Record<string, unknown>).username ?? session.user.name}`}
             data-testid="user-menu-profile"
             className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
             onClick={() => setOpen(false)}

@@ -10,6 +10,7 @@ import { db } from "@/db";
 import { articles, users } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { timeAgo } from "@/lib/utils";
+import { renderMarkdown } from "@/lib/markdown";
 
 export default async function ArticlesPage() {
   const articleList = await db
@@ -69,7 +70,7 @@ export default async function ArticlesPage() {
   );
 }
 
-function ArticleCard({
+async function ArticleCard({
   article,
 }: {
   article: {
@@ -87,6 +88,7 @@ function ArticleCard({
   };
 }) {
   const displaySummary = article.aiSummary ?? article.summary;
+  const summaryHtml = displaySummary ? await renderMarkdown(displaySummary) : null;
 
   return (
     <Link
@@ -97,10 +99,11 @@ function ArticleCard({
       <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
         {article.title}
       </h2>
-      {displaySummary && (
-        <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-          {displaySummary}
-        </p>
+      {summaryHtml && (
+        <div
+          className="prose prose-sm prose-slate mt-2 max-w-none dark:prose-invert"
+          dangerouslySetInnerHTML={{ __html: summaryHtml }}
+        />
       )}
       <div className="mt-4 flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
         <span>by {article.authorName ?? article.authorUsername ?? "Anonymous"}</span>
