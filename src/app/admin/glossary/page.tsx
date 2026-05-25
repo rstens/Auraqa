@@ -3,6 +3,8 @@ import { glossaryTerms } from "@/db/schema";
 import { asc } from "drizzle-orm";
 import { GlossaryAdmin } from "@/components/admin/glossary-admin";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminGlossaryPage() {
   const terms = await db
     .select()

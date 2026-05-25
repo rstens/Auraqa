@@ -3,6 +3,8 @@ import { aiInteractions } from "@/db/schema";
 import { count, sum, desc, eq } from "drizzle-orm";
 import { timeAgo } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminAIPage() {
   const [totals, recentList] = await Promise.all([
     db

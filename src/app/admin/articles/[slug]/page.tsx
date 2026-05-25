@@ -7,6 +7,8 @@ import { timeAgo } from "@/lib/utils";
 import Link from "next/link";
 import { ArticleActions } from "@/components/admin/article-actions";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminArticleDetailPage({
   params,
 }: {

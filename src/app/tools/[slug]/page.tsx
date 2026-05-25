@@ -13,6 +13,8 @@ import { timeAgo } from "@/lib/utils";
 import { auth } from "@/lib/auth";
 import { ReviewForm } from "@/components/tools/review-form";
 
+export const dynamic = "force-dynamic";
+
 export default async function ToolPage({
   params,
 }: {

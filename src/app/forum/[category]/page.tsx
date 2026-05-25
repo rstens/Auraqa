@@ -11,6 +11,8 @@ import { eq, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { timeAgo } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 export default async function CategoryPage({
   params,
 }: {

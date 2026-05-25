@@ -14,6 +14,8 @@ import { auth, isAdmin } from "@/lib/auth";
 import Link from "next/link";
 import { timeAgo } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 export default async function ArticlePage({
   params,
 }: {

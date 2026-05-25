@@ -6,6 +6,8 @@ import { timeAgo } from "@/lib/utils";
 import Link from "next/link";
 import { ToolActions } from "@/components/admin/tool-actions";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminToolDetailPage({
   params,
 }: {

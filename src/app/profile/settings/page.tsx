@@ -5,6 +5,8 @@ import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { SettingsForm } from "@/components/profile/settings-form";
 
+export const dynamic = "force-dynamic";
+
 export default async function SettingsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");

@@ -9,6 +9,8 @@ import { db } from "@/db";
 import { forumCategories, forumThreads } from "@/db/schema";
 import { eq, count, asc } from "drizzle-orm";
 
+export const dynamic = "force-dynamic";
+
 export default async function ForumPage() {
   const categories = await db
     .select({

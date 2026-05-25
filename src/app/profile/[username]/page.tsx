@@ -5,6 +5,8 @@ import { notFound } from "next/navigation";
 import { timeAgo } from "@/lib/utils";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 export default async function ProfilePage({
   params,
 }: {

@@ -11,6 +11,8 @@ import { forumCategories } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { ThreadForm } from "@/components/forum/thread-form";
 
+export const dynamic = "force-dynamic";
+
 export default async function NewThreadPage({
   params,
 }: {

@@ -7,6 +7,8 @@ import { timeAgo } from "@/lib/utils";
 import Link from "next/link";
 import { UserActions } from "@/components/admin/user-actions";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminUserDetailPage({
   params,
 }: {

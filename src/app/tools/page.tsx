@@ -9,6 +9,8 @@ import { db } from "@/db";
 import { tools } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 
+export const dynamic = "force-dynamic";
+
 export default async function ToolsPage() {
   const toolList = await db
     .select()

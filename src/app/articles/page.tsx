@@ -12,6 +12,8 @@ import { desc, eq } from "drizzle-orm";
 import { timeAgo } from "@/lib/utils";
 import { renderMarkdown } from "@/lib/markdown";
 
+export const dynamic = "force-dynamic";
+
 export default async function ArticlesPage() {
   const articleList = await db
     .select({

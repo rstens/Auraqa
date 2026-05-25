@@ -4,6 +4,8 @@ import { tools, users } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { timeAgo } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminToolsPage({
   searchParams,
 }: {
