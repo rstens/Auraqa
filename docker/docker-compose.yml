@@ -59,6 +59,7 @@ services:
     environment:
       DATABASE_URL: postgres://auraqa:auraqa_password@db:5432/auraqa
       NEXTAUTH_URL: http://localhost:3000
+      AUTH_TRUST_HOST: "true"
       NODE_ENV: production
     env_file:
       - ../.env.local

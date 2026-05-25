@@ -20,4 +20,5 @@ services:
       - ../public:/app/public
     environment:
       NODE_ENV: development
+      AUTH_TRUST_HOST: "true"
     command: sh -c "npx drizzle-kit push && npx tsx src/db/seed.ts && npm run dev"
