@@ -100,7 +100,7 @@ export const glossaryTermSchema = z.object({
 /** Schema for search queries. */
 export const searchQuerySchema = z.object({
   q: z.string().min(1).max(200),
-  type: z.enum(["all", "articles", "threads", "tools"]).default("all"),
+  type: z.enum(["all", "articles", "threads", "tools", "glossary"]).default("all"),
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });

@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { articles, forumThreads, tools } from "@/db/schema";
+import { articles, forumThreads, tools, glossaryTerms } from "@/db/schema";
 import { and, eq, or, ilike, desc } from "drizzle-orm";
 import { searchQuerySchema } from "@/lib/validators";
 
@@ -126,6 +126,36 @@ export async function GET(request: NextRequest) {
         excerpt: t.description.slice(0, 200),
         slug: t.slug,
         url: `/tools/${t.slug}`,
+      }))
+    );
+  }
+
+  if (type === "all" || type === "glossary") {
+    const glossaryResults = await db
+      .select({
+        id: glossaryTerms.id,
+        term: glossaryTerms.term,
+        abbreviation: glossaryTerms.abbreviation,
+        definition: glossaryTerms.definition,
+      })
+      .from(glossaryTerms)
+      .where(
+        or(
+          ilike(glossaryTerms.term, pattern),
+          ilike(glossaryTerms.definition, pattern),
+          ilike(glossaryTerms.abbreviation, pattern)
+        )
+      )
+      .limit(limit);
+
+    results.push(
+      ...glossaryResults.map((g) => ({
+        type: "glossary" as const,
+        id: g.id,
+        title: `${g.term}${g.abbreviation ? ` (${g.abbreviation})` : ""}`,
+        excerpt: g.definition.slice(0, 200),
+        slug: g.id,
+        url: `/glossary?q=${encodeURIComponent(g.term)}`,
       }))
     );
   }

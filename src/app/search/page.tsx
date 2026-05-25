@@ -53,6 +53,7 @@ function SearchContent() {
     article: "Article",
     thread: "Thread",
     tool: "Tool",
+    glossary: "Glossary",
   };
 
   return (
