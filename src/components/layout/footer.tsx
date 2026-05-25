@@ -26,6 +26,7 @@ export function Footer() {
               Resources
             </h3>
             <ul className="mt-3 space-y-2">
+              <FooterLink href="/glossary">ISTQB Glossary</FooterLink>
               <FooterLink href="/search">Search</FooterLink>
               <FooterLink href="/forum/test-automation">Test Automation</FooterLink>
               <FooterLink href="/forum/api-testing">API Testing</FooterLink>

@@ -26,6 +26,7 @@ export function Navbar() {
           <NavLink href="/articles">Articles</NavLink>
           <NavLink href="/forum">Forum</NavLink>
           <NavLink href="/tools">Tools</NavLink>
+          <NavLink href="/glossary">Glossary</NavLink>
         </nav>
 
         {/* Right side: search + user */}
@@ -79,6 +80,7 @@ function MobileMenuButton() {
         <MobileNavLink href="/articles">Articles</MobileNavLink>
         <MobileNavLink href="/forum">Forum</MobileNavLink>
         <MobileNavLink href="/tools">Tools</MobileNavLink>
+        <MobileNavLink href="/glossary">Glossary</MobileNavLink>
         <MobileNavLink href="/search">Search</MobileNavLink>
       </nav>
     </details>
