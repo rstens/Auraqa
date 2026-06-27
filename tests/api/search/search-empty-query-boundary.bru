@@ -1,0 +1,21 @@
+meta {
+  name: Search — boundary (empty q)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/search
+  body: none
+  auth: none
+}
+
+params:query {
+  q:
+}
+
+tests {
+  test("empty query returns 200 or 400, never 500", function() {
+    expect(res.getStatus()).to.be.oneOf([200, 400]);
+  });
+}

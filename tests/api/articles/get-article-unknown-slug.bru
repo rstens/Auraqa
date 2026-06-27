@@ -1,0 +1,29 @@
+meta {
+  name: Get article — negative (unknown slug)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/articles/this-slug-definitely-does-not-exist-xyz
+  body: none
+  auth: none
+}
+
+tests {
+  test("returns 404 for unknown slug", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+
+  test("body is JSON with an error message", function() {
+    const body = res.getBody();
+    expect(body).to.be.an("object");
+    expect(body).to.have.property("error");
+  });
+}
+
+docs {
+  Negative: unknown article slugs must 404, not 500. The handler should
+  also produce a parseable error body (the client error-handling pattern
+  in CLAUDE.md relies on `JSON.parse(text).error`).
+}

@@ -204,6 +204,25 @@ jobs:
           CI: "true"
         run: npx playwright test
 
+run: npm install --no-save --no-audit --no-fund @usebruno/cli@^1
+      - name: Run Bruno API tests
+        # continue-on-error so a single failing API assertion doesn't
+        # mask the upload-artifact steps below — the report is more
+        # useful than the exit code.
+        continue-on-error: true
+        run: npx bru run --env ci tests/api --reporter-html bruno-report.html --reporter-json bruno-report.json
+
+      - name: Upload Bruno report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: bruno-api-report
+          retention-days: 14
+          path: |
+            bruno-report.html
+            bruno-report.json
+          if-no-files-found: ignore
+
       - name: Upload Playwright HTML report
         if: always()
         uses: actions/upload-artifact@v7

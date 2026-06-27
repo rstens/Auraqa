@@ -1,0 +1,24 @@
+meta {
+  name: List forum threads — boundary (non-numeric categoryId)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/forum/threads?categoryId=not-a-number
+  body: none
+  auth: none
+}
+
+params:query {
+  categoryId: not-a-number
+}
+
+tests {
+  test("non-numeric categoryId is rejected or treated as no filter", function() {
+    // Either: 400 (validation error) or 200 (filter ignored) is fine.
+    // A 500 means the handler is passing the raw string into a numeric
+    // SQL clause without coercion — that's a regression.
+    expect(res.getStatus()).to.be.oneOf([200, 400]);
+  });
+}

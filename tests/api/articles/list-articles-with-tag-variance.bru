@@ -1,0 +1,30 @@
+meta {
+  name: List articles — variance (filter by tag)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/articles
+  body: none
+  auth: none
+}
+
+params:query {
+  tag: automation
+}
+
+tests {
+  test("returns 200 even when no articles match", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("body is an array (possibly empty)", function() {
+    expect(res.getBody()).to.be.an("array");
+  });
+}
+
+docs {
+  Variance: the endpoint accepts an optional ?tag= filter. A non-matching
+  filter must still return 200 with an empty array, not 404.
+}

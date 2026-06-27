@@ -1,0 +1,32 @@
+meta {
+  name: Submit tool — negative (unauthenticated)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/tools
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Anon tool",
+    "slug": "anon-tool",
+    "url": "https://example.com",
+    "description": "..."
+  }
+}
+
+tests {
+  test("anonymous POST is rejected (401/403)", function() {
+    expect(res.getStatus()).to.be.oneOf([401, 403]);
+  });
+}
+
+docs {
+  Regression guard for the moderation bypass that PR #1 in the project's
+  early history fixed: anonymous POSTs to /api/tools must not be accepted
+  and must not silently auto-publish a "pending" record either.
+}

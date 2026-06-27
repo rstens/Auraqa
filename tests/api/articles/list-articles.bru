@@ -1,0 +1,40 @@
+meta {
+  name: List articles — positive
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/articles
+  body: none
+  auth: none
+}
+
+tests {
+  test("returns 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("body is an array", function() {
+    const body = res.getBody();
+    expect(body).to.be.an("array");
+  });
+
+  test("each article has the expected shape", function() {
+    const body = res.getBody();
+    if (body.length === 0) return; // empty DB is acceptable
+    const article = body[0];
+    expect(article).to.have.property("id");
+    expect(article).to.have.property("slug");
+    expect(article).to.have.property("title");
+  });
+
+  test("content-type is JSON", function() {
+    const ct = res.getHeader("content-type") || "";
+    expect(String(ct)).to.match(/application\/json/);
+  });
+
+  test("responds within 2000ms", function() {
+    expect(res.getResponseTime()).to.be.lessThan(2000);
+  });
+}
