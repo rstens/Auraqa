@@ -18,6 +18,9 @@ import type { NextConfig } from "next";
 // emits inline runtime bootstrap and styled-jsx blocks; tightening to
 // nonce-only requires a middleware that injects per-request nonces and is
 // tracked as future work in docs/SECURITY.md.
+//
+// `'unsafe-eval'` is NOT included — Next.js 16 (Turbopack) production builds
+// do not require runtime eval(). This addresses ZAP alert [10055].
 const SECURITY_HEADERS = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
@@ -26,6 +29,10 @@ const SECURITY_HEADERS = [
     key: "Permissions-Policy",
     value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
   },
+  // Mitigates Spectre-class side-channel attacks by isolating cross-origin
+  // resources. Uses "credentialless" to avoid breaking same-origin subresources
+  // (fonts, images) that don't send CORP headers (ZAP alert 90004).
+  { key: "Cross-Origin-Embedder-Policy", value: "credentialless" },
   {
     key: "Content-Security-Policy",
     value: [
@@ -37,7 +44,7 @@ const SECURITY_HEADERS = [
       "img-src 'self' data: https://avatars.githubusercontent.com https://lh3.googleusercontent.com",
       "font-src 'self' data:",
       "style-src 'self' 'unsafe-inline'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "script-src 'self' 'unsafe-inline'",
       "connect-src 'self'",
     ].join("; "),
   },

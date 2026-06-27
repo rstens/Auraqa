@@ -135,8 +135,30 @@ the Security Scan workflow:
 - `Referrer-Policy: strict-origin-when-cross-origin`
 - `Permissions-Policy` — denies camera/microphone/geolocation/payment/USB [10063]
 - `poweredByHeader: false` strips `X-Powered-By: Next.js` [10037]
+- `Cross-Origin-Embedder-Policy: credentialless` — mitigates Spectre-class
+  side-channel attacks [90004]. Uses `credentialless` instead of
+  `require-corp` to avoid breaking same-origin fonts/images that lack CORP.
 
 CSP currently allows `'unsafe-inline'` for `script-src`/`style-src` because
 Next.js emits inline runtime bootstrap and styled-jsx blocks. Tightening to
 nonce-only requires a middleware that injects per-request nonces and is
 deferred to a follow-up.
+
+`'unsafe-eval'` was removed from `script-src` — Next.js 16 with Turbopack
+does not require runtime `eval()` in production builds [10055].
+
+## Accepted ZAP baseline alerts (informational / false-positive)
+
+The following ZAP baseline alerts are expected and not actionable:
+
+| Alert ID | Name                                         | Disposition                                                                   |
+| -------- | -------------------------------------------- | ----------------------------------------------------------------------------- |
+| 10019    | Content-Type Header Missing                  | Fires on Next.js 308 redirect responses; redirects carry no body.             |
+| 10027    | Information Disclosure - Suspicious Comments | Comments inside bundled `node_modules/next` JS; not our source code.          |
+| 10044    | Big Redirect Detected                        | Auth-protected pages redirect unauthenticated users; by design.               |
+| 10049    | Non-Storable Content                         | Fonts and static assets served with correct caching; ZAP misreads `no-cache`. |
+| 10096    | Timestamp Disclosure - Unix                  | Epoch values inside React DOM runtime code; not sensitive.                    |
+| 10109    | Modern Web Application                       | Informational only.                                                           |
+| 10110    | Dangerous JS Functions                       | `eval`/`Function()` in React server-DOM; bundled by Next.js, not our code.    |
+| 10111    | Authentication Request Identified            | Informational — confirms login page exists.                                   |
+| 10202    | Absence of Anti-CSRF Tokens                  | NextAuth.js uses SameSite cookies + server-side validation; no form tokens.   |
