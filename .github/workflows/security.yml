@@ -146,10 +146,8 @@ jobs:
         # writes inside the container's CWD, not the runner workspace, and
         # the file disappears when the container exits.
         #
-        # `|| true` swallows the exit-1 osv-scanner emits when it finds
-        # advisories — we surface findings via the SARIF + summary, the
-        # step's non-zero exit was just rendering as a red ##[error] in
-        # the run UI without conveying anything actionable.
+        # Swallow only exit code 1 (findings present) while propagating
+        # any other non-zero exit code.
         continue-on-error: true
         run: |
           docker run --rm -v "$PWD:/src" -w /src \
@@ -158,7 +156,11 @@ jobs:
             --recursive \
             --format=sarif \
             --output-file=osv-scanner.sarif \
-            ./ || true
+            ./
+          ec=$?
+          if [ "$ec" -ne 0 ] && [ "$ec" -ne 1 ]; then
+            exit "$ec"
+          fi
           ls -la osv-scanner.sarif || echo "(SARIF not produced)"
 
       - name: Upload OSV-Scanner SARIF to Security tab
