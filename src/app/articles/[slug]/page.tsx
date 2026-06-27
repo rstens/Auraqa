@@ -21,30 +21,34 @@ export default async function ArticlePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const session = await auth();
 
-  const result = await db
-    .select({
-      id: articles.id,
-      title: articles.title,
-      slug: articles.slug,
-      content: articles.content,
-      summary: articles.summary,
-      aiSummary: articles.aiSummary,
-      status: articles.status,
-      voteScore: articles.voteScore,
-      viewCount: articles.viewCount,
-      publishedAt: articles.publishedAt,
-      createdAt: articles.createdAt,
-      authorId: articles.authorId,
-      authorName: users.name,
-      authorImage: users.image,
-      authorUsername: users.username,
-    })
-    .from(articles)
-    .leftJoin(users, eq(articles.authorId, users.id))
-    .where(eq(articles.slug, slug))
-    .limit(1);
+  // auth() and the article SELECT don't depend on each other — run them in
+  // parallel to cut a round-trip off the critical path.
+  const [session, result] = await Promise.all([
+    auth(),
+    db
+      .select({
+        id: articles.id,
+        title: articles.title,
+        slug: articles.slug,
+        content: articles.content,
+        summary: articles.summary,
+        aiSummary: articles.aiSummary,
+        status: articles.status,
+        voteScore: articles.voteScore,
+        viewCount: articles.viewCount,
+        publishedAt: articles.publishedAt,
+        createdAt: articles.createdAt,
+        authorId: articles.authorId,
+        authorName: users.name,
+        authorImage: users.image,
+        authorUsername: users.username,
+      })
+      .from(articles)
+      .leftJoin(users, eq(articles.authorId, users.id))
+      .where(eq(articles.slug, slug))
+      .limit(1),
+  ]);
 
   const article = result[0];
   if (!article || article.status !== "published") notFound();

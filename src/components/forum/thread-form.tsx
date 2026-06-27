@@ -11,12 +11,7 @@ import { useFormSubmit, postJson } from "@/lib/use-form-submit";
 
 type Thread = { id: string };
 
-export function ThreadForm({
-  categoryId,
-}: {
-  categoryId: number;
-  categorySlug: string;
-}) {
+export function ThreadForm({ categoryId }: { categoryId: number }) {
   const { loading, error, handleSubmit } = useFormSubmit(async (formData) => {
     const thread = await postJson<Thread>("/api/forum/threads", {
       title: formData.get("title"),

@@ -5,12 +5,19 @@
  * component was duplicating. Callers provide a `submit` function that
  * receives the FormData and returns either a redirect path (string) or
  * `null` to refresh in place.
+ *
+ * For the actual HTTP call, callers use `postJson` from `@/lib/api`.
  */
 
 "use client";
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+
+// Re-export postJson so existing imports of `{ useFormSubmit, postJson }` from
+// this module keep working without a churn-only refactor on every form. New
+// callers should import postJson directly from `@/lib/api`.
+export { postJson } from "./api";
 
 export type SubmitResult = string | null;
 
@@ -45,26 +52,4 @@ export function useFormSubmit(
   );
 
   return { loading, error, setError, handleSubmit };
-}
-
-/**
- * Helper: POST JSON to an endpoint and parse the response, throwing on !ok.
- * Used by form submit handlers to keep them concise.
- */
-export async function postJson<T = unknown>(
-  url: string,
-  body: unknown,
-  init?: RequestInit
-): Promise<T> {
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-    ...init,
-  });
-  if (!res.ok) {
-    const errBody = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(errBody.error ?? `Request failed (${res.status})`);
-  }
-  return res.json() as Promise<T>;
 }

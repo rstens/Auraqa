@@ -21,28 +21,48 @@ export default async function ThreadPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const session = await auth();
 
-  const threadResult = await db
-    .select({
-      id: forumThreads.id,
-      title: forumThreads.title,
-      content: forumThreads.content,
-      voteScore: forumThreads.voteScore,
-      replyCount: forumThreads.replyCount,
-      viewCount: forumThreads.viewCount,
-      createdAt: forumThreads.createdAt,
-      authorName: users.name,
-      authorUsername: users.username,
-      authorImage: users.image,
-      categoryName: forumCategories.name,
-      categorySlug: forumCategories.slug,
-    })
-    .from(forumThreads)
-    .leftJoin(users, eq(forumThreads.authorId, users.id))
-    .leftJoin(forumCategories, eq(forumThreads.categoryId, forumCategories.id))
-    .where(eq(forumThreads.id, id))
-    .limit(1);
+  // auth(), thread lookup, and replies lookup are all independent — fan
+  // them out in a single Promise.all so we wait once for the slowest, not
+  // three times in sequence.
+  const [session, threadResult, replies] = await Promise.all([
+    auth(),
+    db
+      .select({
+        id: forumThreads.id,
+        title: forumThreads.title,
+        content: forumThreads.content,
+        voteScore: forumThreads.voteScore,
+        replyCount: forumThreads.replyCount,
+        viewCount: forumThreads.viewCount,
+        createdAt: forumThreads.createdAt,
+        authorName: users.name,
+        authorUsername: users.username,
+        authorImage: users.image,
+        categoryName: forumCategories.name,
+        categorySlug: forumCategories.slug,
+      })
+      .from(forumThreads)
+      .leftJoin(users, eq(forumThreads.authorId, users.id))
+      .leftJoin(forumCategories, eq(forumThreads.categoryId, forumCategories.id))
+      .where(eq(forumThreads.id, id))
+      .limit(1),
+    db
+      .select({
+        id: forumReplies.id,
+        content: forumReplies.content,
+        isAccepted: forumReplies.isAccepted,
+        voteScore: forumReplies.voteScore,
+        createdAt: forumReplies.createdAt,
+        authorName: users.name,
+        authorUsername: users.username,
+        authorImage: users.image,
+      })
+      .from(forumReplies)
+      .leftJoin(users, eq(forumReplies.authorId, users.id))
+      .where(eq(forumReplies.threadId, id))
+      .orderBy(asc(forumReplies.createdAt)),
+  ]);
 
   const thread = threadResult[0];
   if (!thread) notFound();
@@ -53,22 +73,6 @@ export default async function ThreadPage({
     .set({ viewCount: sql`${forumThreads.viewCount} + 1` })
     .where(eq(forumThreads.id, thread.id))
     .catch((err) => console.error("Failed to increment thread view count:", err));
-
-  const replies = await db
-    .select({
-      id: forumReplies.id,
-      content: forumReplies.content,
-      isAccepted: forumReplies.isAccepted,
-      voteScore: forumReplies.voteScore,
-      createdAt: forumReplies.createdAt,
-      authorName: users.name,
-      authorUsername: users.username,
-      authorImage: users.image,
-    })
-    .from(forumReplies)
-    .leftJoin(users, eq(forumReplies.authorId, users.id))
-    .where(eq(forumReplies.threadId, id))
-    .orderBy(asc(forumReplies.createdAt));
 
   // Render Markdown for the thread and all replies in parallel BEFORE the JSX.
   // Doing this inside replies.map(async ...) would return Promises (not JSX)

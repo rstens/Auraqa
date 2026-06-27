@@ -11,7 +11,8 @@
 
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
+import { postJson } from "@/lib/api";
 
 type TargetType = "article" | "thread" | "reply";
 
@@ -29,25 +30,20 @@ export function VoteButtons({
   size?: "sm" | "md";
 }) {
   const [score, setScore] = useState(initialScore);
-  const [, startTransition] = useTransition();
 
   async function cast(value: 1 | -1) {
     if (!canVote) return;
     const previous = score;
-    // Optimistic: assume a fresh vote in the chosen direction.
-    // The server's actual delta (toggle/flip/new) is returned in the response
-    // and replaces this estimate.
+    // Optimistic: assume a fresh vote in the chosen direction. The server's
+    // actual delta (toggle/flip/new) comes back in the response and replaces
+    // this estimate.
     setScore((s) => s + value);
     try {
-      const res = await fetch("/api/votes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ targetType, targetId, value }),
-      });
-      if (!res.ok) throw new Error(`vote failed (${res.status})`);
-      const body = (await res.json()) as { scoreDelta: number };
-      // Reconcile: previous + actual delta (which may be 0 if same-direction toggle).
-      startTransition(() => setScore(previous + body.scoreDelta));
+      const { scoreDelta } = await postJson<{ scoreDelta: number }>(
+        "/api/votes",
+        { targetType, targetId, value }
+      );
+      setScore(previous + scoreDelta);
     } catch (err) {
       console.error("VoteButtons:", err);
       setScore(previous);

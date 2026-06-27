@@ -17,6 +17,13 @@ import { auth } from "@/lib/auth";
 import { castVoteSchema } from "@/lib/validators";
 import { generateId } from "@/lib/uuid";
 
+/** Dispatch map from vote target type to the table whose vote_score it updates. */
+const TARGET_TABLES = {
+  article: articles,
+  thread: forumThreads,
+  reply: forumReplies,
+} as const;
+
 export async function POST(request: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -73,22 +80,11 @@ export async function POST(request: NextRequest) {
     }
 
     if (delta !== 0) {
-      if (targetType === "article") {
-        await tx
-          .update(articles)
-          .set({ voteScore: sql`${articles.voteScore} + ${delta}` })
-          .where(eq(articles.id, targetId));
-      } else if (targetType === "thread") {
-        await tx
-          .update(forumThreads)
-          .set({ voteScore: sql`${forumThreads.voteScore} + ${delta}` })
-          .where(eq(forumThreads.id, targetId));
-      } else if (targetType === "reply") {
-        await tx
-          .update(forumReplies)
-          .set({ voteScore: sql`${forumReplies.voteScore} + ${delta}` })
-          .where(eq(forumReplies.id, targetId));
-      }
+      const table = TARGET_TABLES[targetType];
+      await tx
+        .update(table)
+        .set({ voteScore: sql`${table.voteScore} + ${delta}` })
+        .where(eq(table.id, targetId));
     }
 
     return delta;

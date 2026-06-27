@@ -12,8 +12,8 @@ import { users, articles, forumThreads } from "@/db/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { timeAgo } from "@/lib/utils";
+import { UserAvatar } from "@/components/shared/user-avatar";
 
 export default async function ProfilePage({
   params,
@@ -70,19 +70,11 @@ export default async function ProfilePage({
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
       <header className="flex items-center gap-4">
-        {user.image ? (
-          <Image
-            src={user.image}
-            alt={user.name ?? user.username ?? ""}
-            width={64}
-            height={64}
-            className="rounded-full"
-          />
-        ) : (
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-600 text-2xl font-medium text-white">
-            {(user.name ?? user.username ?? "U")[0].toUpperCase()}
-          </div>
-        )}
+        <UserAvatar
+          src={user.image}
+          name={user.name ?? user.username}
+          size="lg"
+        />
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
             {user.name ?? user.username}

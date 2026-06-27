@@ -31,9 +31,12 @@ function createDb(): Drizzled {
 /**
  * Drizzle ORM database client with full schema type inference.
  * Import this in server components and API routes.
+ *
+ * In production this is a regular module-scoped singleton. In dev/test, it's
+ * pinned on `globalThis` so Next.js' HMR (which re-evaluates this module on
+ * each file change) reuses the same pool instead of leaking a new one.
  */
-export const db: Drizzled = globalForDb.__auraqa_db ?? createDb();
-
-if (process.env.NODE_ENV !== "production") {
-  globalForDb.__auraqa_db = db;
-}
+export const db: Drizzled =
+  process.env.NODE_ENV === "production"
+    ? createDb()
+    : (globalForDb.__auraqa_db ??= createDb());
