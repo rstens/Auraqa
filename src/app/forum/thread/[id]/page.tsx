@@ -6,13 +6,14 @@
 
 import { db } from "@/db";
 import { forumThreads, forumReplies, users, forumCategories } from "@/db/schema";
-import { eq, asc } from "drizzle-orm";
+import { eq, asc, sql } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { renderMarkdown } from "@/lib/markdown";
 import { timeAgo } from "@/lib/utils";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { ReplyForm } from "@/components/forum/reply-form";
+import { VoteButtons } from "@/components/shared/vote-buttons";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +49,13 @@ export default async function ThreadPage({
   const thread = threadResult[0];
   if (!thread) notFound();
 
+  // Fire-and-forget atomic view count bump — don't block render.
+  void db
+    .update(forumThreads)
+    .set({ viewCount: sql`${forumThreads.viewCount} + 1` })
+    .where(eq(forumThreads.id, thread.id))
+    .catch((err) => console.error("Failed to increment thread view count:", err));
+
   const replies = await db
     .select({
       id: forumReplies.id,
@@ -64,9 +72,9 @@ export default async function ThreadPage({
     .where(eq(forumReplies.threadId, id))
     .orderBy(asc(forumReplies.createdAt));
 
-  // Render Markdown for the thread and all replies in parallel BEFORE the JSX.
-  // Doing this inside replies.map(async ...) would return Promises (not JSX)
-  // and serialize the I/O — both rendering bugs and a perf hit.
+  // Render Markdown for thread + all replies in a single Promise.all rather
+  // than awaiting inside replies.map(async ...), which would return Promises
+  // that React Server Components can't unwrap into JSX.
   const [threadHtml, replyHtmls] = await Promise.all([
     renderMarkdown(thread.content),
     Promise.all(replies.map((r) => renderMarkdown(r.content))),
@@ -93,7 +101,13 @@ export default async function ThreadPage({
         <div className="mt-2 flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
           <span>{thread.authorName ?? thread.authorUsername ?? "Anonymous"}</span>
           <span>{timeAgo(thread.createdAt)}</span>
-          <span>{thread.voteScore} votes</span>
+          <VoteButtons
+            targetType="thread"
+            targetId={thread.id}
+            initialScore={thread.voteScore}
+            canVote={!!session?.user}
+            size="sm"
+          />
           <span>{thread.viewCount} views</span>
         </div>
         <div
@@ -130,7 +144,13 @@ export default async function ThreadPage({
               <div className="mt-3 flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
                 <span>{reply.authorName ?? reply.authorUsername ?? "Anonymous"}</span>
                 <span>{timeAgo(reply.createdAt)}</span>
-                <span>{reply.voteScore} votes</span>
+                <VoteButtons
+                  targetType="reply"
+                  targetId={reply.id}
+                  initialScore={reply.voteScore}
+                  canVote={!!session?.user}
+                  size="sm"
+                />
               </div>
             </div>
           ))}

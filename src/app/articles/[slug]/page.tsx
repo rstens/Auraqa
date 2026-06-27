@@ -7,12 +7,13 @@
 
 import { db } from "@/db";
 import { articles, users, articleTags, tags } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { renderMarkdown } from "@/lib/markdown";
 import { auth, isAdmin } from "@/lib/auth";
 import Link from "next/link";
 import { timeAgo } from "@/lib/utils";
+import { VoteButtons } from "@/components/shared/vote-buttons";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +55,14 @@ export default async function ArticlePage({
   const admin = await isAdmin();
   if (article.status !== "published" && !isAuthor && !admin) notFound();
 
+  // Fire-and-forget atomic view count bump — don't block render. Atomic
+  // `view_count + 1` in SQL avoids races between concurrent views.
+  void db
+    .update(articles)
+    .set({ viewCount: sql`${articles.viewCount} + 1` })
+    .where(eq(articles.id, article.id))
+    .catch((err) => console.error("Failed to increment article view count:", err));
+
   const contentHtml = await renderMarkdown(article.content);
   const aiSummaryHtml = article.aiSummary ? await renderMarkdown(article.aiSummary) : null;
 
@@ -87,7 +96,13 @@ export default async function ArticlePage({
         <div className="mt-4 flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
           <span>by {article.authorName ?? article.authorUsername ?? "Anonymous"}</span>
           <span>{timeAgo(article.publishedAt ?? article.createdAt)}</span>
-          <span>{article.voteScore} votes</span>
+          <VoteButtons
+            targetType="article"
+            targetId={article.id}
+            initialScore={article.voteScore}
+            canVote={!!session?.user}
+            size="sm"
+          />
           <span>{article.viewCount} views</span>
         </div>
 

@@ -203,9 +203,14 @@ export const forumThreadTags = pgTable("forum_thread_tags", {
 export const forumReplies = pgTable("forum_replies", {
   id: uuid("id").primaryKey(),
   threadId: uuid("thread_id").notNull().references(() => forumThreads.id, { onDelete: "cascade" }),
+  // authorId is notNull, so ON DELETE CASCADE — the SET NULL alternative
+  // contradicts the not-null constraint and blocks user deletion at the DB
+  // level. See PR #9 for the original fix.
   authorId: uuid("author_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   // Self-reference: a reply's parent is another reply in the same thread.
   // AnyPgColumn cast breaks the circular forward-reference at type level.
+  // Nullable + ON DELETE SET NULL so removing a parent promotes its
+  // children to top-level instead of orphaning the rows.
   parentId: uuid("parent_id").references((): AnyPgColumn => forumReplies.id, {
     onDelete: "set null",
   }),
