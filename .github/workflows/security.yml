@@ -512,3 +512,140 @@ jobs:
       - name: Stop Docker services
         if: always()
         run: docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml down -v
+
+  # =========================================================================
+  # Job 3 — Hand off findings to the Copilot coding agent
+  #
+  # Files an issue containing the triage prompt and assigns @Copilot, which
+  # picks it up via the GitHub Copilot coding-agent flow and opens a PR
+  # against `dev` with the fixes.
+  #
+  # The agent has to be enabled in the repo for the assignment to take —
+  # without it, the issue still gets filed (the step is `continue-on-error`)
+  # so a human can pick it up later.
+  #
+  # Smoke is skipped: it's a pre-merge sanity check that rarely produces
+  # actionable findings, so spawning an issue per smoke run is just noise.
+  # =========================================================================
+  trigger-copilot-fix:
+    name: Hand off findings to Copilot
+    runs-on: ubuntu-latest
+    needs: [static-analysis, dynamic-analysis]
+    if: always() && inputs.intensity != 'smoke'
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: File triage issue and assign Copilot
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID: ${{ github.run_id }}
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+          REPO_SLUG: ${{ github.repository }}
+        run: |
+          # Header is templated with the actual run ID + URL; the prompt
+          # body itself is read from a quoted heredoc so no shell expansion
+          # mangles the backticks, $vars-in-comments, or markdown tables.
+          header="**Triggered by [Security Scan run #${RUN_ID}](${REPO_URL}/actions/runs/${RUN_ID})** (intensity: \`${INTENSITY}\`)."
+
+          prompt=$(cat <<'PROMPT'
+          Review the latest Security Scan workflow run on rstens/Auraqa and open a PR
+          that addresses every actionable finding.
+
+          Steps:
+
+          1. Look up the most recent `Security Scan` workflow run via the GitHub MCP
+             (mcp__github__actions_list with method=list_workflow_runs,
+             resource_id="security.yml"). Use the highest-numbered run with
+             conclusion=success or completed. If the user passes a run ID in the
+             prompt, use that instead.
+
+          2. Fetch the per-job logs for both jobs in that run via
+             mcp__github__get_job_logs with return_content=true. The logs are too
+             large for a single tool call — the MCP will save them to a file under
+             /root/.claude/projects/.../tool-results/. Parse the JSON wrapper
+             (`logs_content` field) and write the inner log to the scratchpad with a
+             small Python snippet, then grep for findings.
+
+             Do NOT try to download the artifact ZIPs. The agent proxy blocks Azure
+             blob storage (productionresultssa2.blob.core.windows.net) with HTTP 403
+             — this is an organization egress policy, do not retry around it.
+
+          3. Extract findings from the logs for every tool that ran:
+             - GitLeaks         — secrets in git history
+             - npm audit        — registry advisories (look for severity counts)
+             - OSV-Scanner      — also visible in the Security tab
+             - Trivy fs/image   — Security tab
+             - Semgrep          — "Blocking Code Findings" block lists rule + file
+             - ZAP baseline     — "WARN-NEW:" lines list the alert + URL count
+             - Nuclei           — JSONL with one finding per line
+             - ZAP full / Wapiti / SQLMap (extreme only)
+
+          4. For each finding, decide:
+             - Real bug → fix the code
+             - False positive on a safe sink → suppress with a targeted annotation
+               (`// nosemgrep: <rule-id> -- <reason>`) and document the WHY
+             - Dev-only / unfixable transitive dep → document as accepted in
+               docs/SECURITY.md, do not file
+             - Workflow misconfig (deprecated action, bad flag) → fix
+               .github/workflows/security.yml
+
+          5. Branch off the latest dev (`git fetch origin dev && git checkout -b
+             fix/security-findings-<short-summary> origin/dev`). Apply all fixes.
+
+          6. Verify locally before pushing:
+             - npm run lint
+             - npm run type-check
+             - npm test
+             - npm run format:check
+             - npm run build
+             Fix anything that breaks. Do not push a red branch.
+
+          7. Commit with a body that lists every finding and how it was addressed
+             (tool → finding → resolution). Push to origin and open a PR against
+             `dev` via mcp__github__create_pull_request. The PR body should mirror
+             the commit body and end with a "Test plan" checklist that includes
+             "Re-run Security Scan → normal on this branch and verify counts drop."
+
+             Use the existing PR template style (## Summary / ## Test plan, table
+             for the ZAP header→alert mapping, before/after counts for npm audit).
+             Do not include the model ID anywhere in the PR.
+
+          8. Report the PR URL and a short summary of what was fixed.
+          PROMPT
+          )
+
+          body=$(printf '%s\n\n---\n\n%s' "$header" "$prompt")
+
+          # Two-step: create the issue, capture the URL, then attempt to
+          # assign @Copilot via the REST API. `--assignee` on `gh issue
+          # create` only accepts human users in older gh versions, so we
+          # use the REST endpoint to add the Copilot bot.
+          issue_url=$(gh issue create \
+            --repo "$REPO_SLUG" \
+            --title "Security Scan #${RUN_ID} — triage findings (${INTENSITY})" \
+            --label security \
+            --body "$body")
+
+          issue_num="${issue_url##*/}"
+          echo "Filed $issue_url"
+
+          if gh api -X POST \
+              "/repos/${REPO_SLUG}/issues/${issue_num}/assignees" \
+              -f "assignees[]=Copilot" >/dev/null 2>&1; then
+            echo "Assigned @Copilot to issue #${issue_num}."
+            assigned="✅ assigned to @Copilot"
+          else
+            echo "::warning::Could not assign @Copilot — assign manually if the coding agent is enabled in this repo."
+            assigned="⚠ not assigned (Copilot coding agent not enabled?)"
+          fi
+
+          {
+            echo "## 🤖 Copilot triage"
+            echo ""
+            echo "- Issue: $issue_url"
+            echo "- Status: $assigned"
+            echo ""
+            echo "If the coding agent doesn't pick it up automatically, assign @Copilot manually on the issue."
+          } >> "$GITHUB_STEP_SUMMARY"
