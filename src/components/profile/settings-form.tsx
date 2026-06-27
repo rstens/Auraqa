@@ -35,7 +35,9 @@ export function SettingsForm({
       if (!res.ok) {
         const text = await res.text();
         let msg = "Failed to update profile";
-        try { msg = JSON.parse(text).error ?? msg; } catch {}
+        try {
+          msg = JSON.parse(text).error ?? msg;
+        } catch {}
         throw new Error(msg);
       }
 
@@ -51,19 +53,28 @@ export function SettingsForm({
   return (
     <form data-testid="settings-form" onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div data-testid="settings-form-error" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+        <div
+          data-testid="settings-form-error"
+          className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400"
+        >
           {error}
         </div>
       )}
 
       {success && (
-        <div data-testid="settings-form-success" className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400">
+        <div
+          data-testid="settings-form-success"
+          className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400"
+        >
           Profile updated successfully.
         </div>
       )}
 
       <div>
-        <label htmlFor="settings-name" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label
+          htmlFor="settings-name"
+          className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+        >
           Display Name
         </label>
         <input
@@ -77,7 +88,10 @@ export function SettingsForm({
       </div>
 
       <div>
-        <label htmlFor="settings-username" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label
+          htmlFor="settings-username"
+          className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+        >
           Username
         </label>
         <input
@@ -91,7 +105,10 @@ export function SettingsForm({
       </div>
 
       <div>
-        <label htmlFor="settings-bio" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label
+          htmlFor="settings-bio"
+          className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+        >
           Bio
         </label>
         <textarea

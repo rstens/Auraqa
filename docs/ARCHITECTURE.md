@@ -62,6 +62,7 @@ Content is stored as raw Markdown in the database rather than rich text HTML. Ma
 ### AI Integration
 
 Claude API (Sonnet 4.6) provides four intelligent features, all using prompt caching for cost efficiency:
+
 1. Article summarization (cached in `ai_summary` column)
 2. Smart search (query expansion)
 3. Answer suggestions (AI-assisted Q&A)
@@ -70,6 +71,7 @@ Claude API (Sonnet 4.6) provides four intelligent features, all using prompt cac
 ## Data Flow
 
 ### Article Creation
+
 1. User submits Markdown content via the article editor
 2. Server validates input (Zod schema)
 3. Slug is generated from the title
@@ -78,6 +80,7 @@ Claude API (Sonnet 4.6) provides four intelligent features, all using prompt cac
 6. Full-text search index is updated
 
 ### Forum Q&A
+
 1. User creates a thread in a category
 2. Other users post replies (supports nesting via `parent_id`)
 3. Users vote on threads and replies
@@ -85,6 +88,7 @@ Claude API (Sonnet 4.6) provides four intelligent features, all using prompt cac
 5. AI can suggest answers for unanswered questions
 
 ### Search
+
 1. User enters a natural language query
 2. AI expands the query into structured search terms
 3. PostgreSQL full-text search runs across articles, threads, and tools

@@ -35,7 +35,9 @@ export function ToolSubmitForm() {
       if (!res.ok) {
         const text = await res.text();
         let message = "Failed to submit tool";
-        try { message = JSON.parse(text).error ?? message; } catch {}
+        try {
+          message = JSON.parse(text).error ?? message;
+        } catch {}
         throw new Error(message);
       }
 
@@ -52,30 +54,77 @@ export function ToolSubmitForm() {
   return (
     <form data-testid="tool-submit-form" onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div data-testid="tool-submit-error" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+        <div
+          data-testid="tool-submit-error"
+          className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400"
+        >
           {error}
         </div>
       )}
 
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Tool Name</label>
-        <input id="name" name="name" type="text" required className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white" placeholder="e.g., Playwright" />
+        <label
+          htmlFor="name"
+          className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+        >
+          Tool Name
+        </label>
+        <input
+          id="name"
+          name="name"
+          type="text"
+          required
+          className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+          placeholder="e.g., Playwright"
+        />
       </div>
 
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Description</label>
-        <textarea id="description" name="description" required rows={4} className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white" placeholder="What does this tool do? What testing scenarios is it best for?" />
+        <label
+          htmlFor="description"
+          className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+        >
+          Description
+        </label>
+        <textarea
+          id="description"
+          name="description"
+          required
+          rows={4}
+          className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+          placeholder="What does this tool do? What testing scenarios is it best for?"
+        />
       </div>
 
       <div>
-        <label htmlFor="websiteUrl" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Website URL (optional)</label>
-        <input id="websiteUrl" name="websiteUrl" type="url" className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white" placeholder="https://playwright.dev" />
+        <label
+          htmlFor="websiteUrl"
+          className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+        >
+          Website URL (optional)
+        </label>
+        <input
+          id="websiteUrl"
+          name="websiteUrl"
+          type="url"
+          className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+          placeholder="https://playwright.dev"
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="category" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Category</label>
-          <select id="category" name="category" className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+          <label
+            htmlFor="category"
+            className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+          >
+            Category
+          </label>
+          <select
+            id="category"
+            name="category"
+            className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+          >
             <option value="">Select...</option>
             <option value="unit">Unit Testing</option>
             <option value="integration">Integration Testing</option>
@@ -92,8 +141,17 @@ export function ToolSubmitForm() {
           </select>
         </div>
         <div>
-          <label htmlFor="pricing" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Pricing</label>
-          <select id="pricing" name="pricing" className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+          <label
+            htmlFor="pricing"
+            className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+          >
+            Pricing
+          </label>
+          <select
+            id="pricing"
+            name="pricing"
+            className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+          >
             <option value="unknown">Unknown</option>
             <option value="free">Free</option>
             <option value="open-source">Open Source</option>
@@ -103,7 +161,12 @@ export function ToolSubmitForm() {
         </div>
       </div>
 
-      <button data-testid="tool-submit-button" type="submit" disabled={loading} className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50">
+      <button
+        data-testid="tool-submit-button"
+        type="submit"
+        disabled={loading}
+        className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+      >
         {loading ? "Submitting..." : "Submit Tool"}
       </button>
     </form>

@@ -41,14 +41,27 @@ export default async function AdminArticlesPage({
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Articles</h1>
         <div data-testid="article-status-filters" className="flex gap-2">
           <FilterLink href="/admin/articles" label="All" active={!status} />
-          <FilterLink href="/admin/articles?status=published" label="Published" active={status === "published"} />
-          <FilterLink href="/admin/articles?status=draft" label="Drafts" active={status === "draft"} />
+          <FilterLink
+            href="/admin/articles?status=published"
+            label="Published"
+            active={status === "published"}
+          />
+          <FilterLink
+            href="/admin/articles?status=draft"
+            label="Drafts"
+            active={status === "draft"}
+          />
         </div>
       </div>
 
       <div data-testid="admin-articles-list" className="mt-6 space-y-2">
         {articleList.length === 0 ? (
-          <p data-testid="admin-articles-empty" className="py-12 text-center text-slate-500 dark:text-slate-400">No articles found.</p>
+          <p
+            data-testid="admin-articles-empty"
+            className="py-12 text-center text-slate-500 dark:text-slate-400"
+          >
+            No articles found.
+          </p>
         ) : (
           articleList.map((article) => (
             <Link
@@ -60,10 +73,13 @@ export default async function AdminArticlesPage({
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <StatusBadge status={article.status} />
-                  <span className="font-medium text-slate-900 dark:text-white">{article.title}</span>
+                  <span className="font-medium text-slate-900 dark:text-white">
+                    {article.title}
+                  </span>
                 </div>
                 <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  by {article.authorName ?? article.authorUsername ?? "Anonymous"} &middot; {timeAgo(article.createdAt)}
+                  by {article.authorName ?? article.authorUsername ?? "Anonymous"} &middot;{" "}
+                  {timeAgo(article.createdAt)}
                 </div>
               </div>
             </Link>
@@ -75,9 +91,10 @@ export default async function AdminArticlesPage({
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const styles = status === "published"
-    ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-    : "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400";
+  const styles =
+    status === "published"
+      ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+      : "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400";
   return <span className={`rounded px-2 py-0.5 text-xs font-medium ${styles}`}>{status}</span>;
 }
 

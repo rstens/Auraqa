@@ -17,6 +17,7 @@ The package.json was restored from git. This plan addresses the **actual** under
 ### 1. Upgrade Node.js from v20.12.2 to >=20.19.0 (or 22.x LTS)
 
 **Problem**: Multiple packages require `^20.19.0 || >=22.12.0`:
+
 - `rolldown@1.0.2` (vitest's bundler) — causes `Cannot find module '@rolldown/binding-win32-x64-msvc'`
 - `vite@8.0.14`, `@vitejs/plugin-react@6.0.2`
 - `jsdom@29.1.1` (test environment)
@@ -25,6 +26,7 @@ The package.json was restored from git. This plan addresses the **actual** under
 **Impact**: `npm run test` is completely broken — 0 tests can run.
 
 **Fix**:
+
 - [ ] Install Node.js 22.x LTS (recommended) or update 20.x to >=20.19.0
 - [ ] After upgrading: `Remove-Item -Recurse -Force node_modules; npm install`
 - [ ] Verify: `npm run test` passes
@@ -35,14 +37,17 @@ The package.json was restored from git. This plan addresses the **actual** under
 ### 2. Fix build failure: Search page Suspense boundary
 
 **Problem**: `npm run build` fails with:
+
 ```
 useSearchParams() should be wrapped in a suspense boundary at page "/search"
 ```
+
 Next.js 16 requires components calling `useSearchParams()` to be inside a `<Suspense>` boundary.
 
 **Impact**: Production builds cannot be created.
 
 **Fix** (`src/app/search/page.tsx`):
+
 - [ ] Extract the search page body into a separate client component (e.g., `SearchContent`)
 - [ ] Create a wrapper default export that renders `<Suspense fallback={...}><SearchContent /></Suspense>`
 - [ ] Verify: `npm run build` completes successfully
@@ -57,6 +62,7 @@ Next.js 16 requires components calling `useSearchParams()` to be inside a `<Susp
 **Rule**: `@typescript-eslint/no-require-imports`
 
 **Fix**:
+
 - [ ] Replace `const { and } = require("drizzle-orm");` with a top-level ES import
 - [ ] Move `import { and } from "drizzle-orm"` to the top of the file
 
@@ -69,6 +75,7 @@ The `doSearch()` function calls `setLoading()` and `setResults()`, and is invoke
 directly inside a `useEffect`. React 19's stricter lint rules flag this.
 
 **Fix**:
+
 - [ ] Refactor to avoid calling the search function directly in the effect body
 - [ ] Option A: Use a ref to track initial load and trigger search outside the effect
 - [ ] Option B: Restructure as a server component with initial data fetched server-side
@@ -80,6 +87,7 @@ directly inside a `useEffect`. React 19's stricter lint rules flag this.
 **Rule**: `@typescript-eslint/no-unused-vars`
 
 **Fix**:
+
 - [ ] Either use `categorySlug` in the component (e.g., for redirect after submit)
 - [ ] Or remove it from the destructured props and the type definition
 
@@ -94,6 +102,7 @@ directly inside a `useEffect`. React 19's stricter lint rules flag this.
 **Risk**: Moderate — requires attacker-controlled CSS input being server-rendered
 
 **Action**:
+
 - [ ] Monitor Next.js releases for a patched version (likely 16.3.x or 16.4.x)
 - [ ] When available: `npm install next@latest`
 - [ ] **Mitigation**: Ensure no user-supplied CSS is server-rendered without sanitization
@@ -105,6 +114,7 @@ directly inside a `useEffect`. React 19's stricter lint rules flag this.
 **Risk**: Low — only exploitable when running a dev server, and drizzle-kit is a CLI tool
 
 **Action**:
+
 - [ ] Monitor drizzle-kit releases for updated internal tooling
 - [ ] The `@esbuild-kit/*` deprecation suggests drizzle-kit will eventually migrate to `tsx`
 - [ ] **No code changes needed** — this is dev-only tooling, not shipped to production
@@ -147,17 +157,17 @@ The lockfile was deleted during troubleshooting and regenerated. Verify it's cor
 
 ## Summary
 
-| # | Issue | Severity | Effort | Status |
-|---|-------|----------|--------|--------|
-| 1 | Node.js version too old (v20.12.2) | P0 | Low (install) | **DONE** — upgraded to v22.16.0 LTS |
-| 2 | Build fails: missing Suspense boundary | P0 | Low (code) | **DONE** |
-| 3 | ESLint: require() in search route | P1 | Trivial | **DONE** |
-| 4 | ESLint: setState in useEffect | P1 | Low | **DONE** |
-| 5 | ESLint: unused categorySlug | P1 | Trivial | **DONE** |
-| 6 | Vuln: postcss XSS (in next) | P2 | Wait | BLOCKED — upstream |
-| 7 | Vuln: esbuild dev server (in drizzle-kit) | P2 | Wait | BLOCKED — upstream |
-| 8 | Add engines field | P3 | Trivial | **DONE** |
-| 9 | Pin next-auth version | P3 | Trivial | **DONE** |
-| 10 | Regenerate lockfile | P3 | Low | **DONE** |
+| #   | Issue                                     | Severity | Effort        | Status                              |
+| --- | ----------------------------------------- | -------- | ------------- | ----------------------------------- |
+| 1   | Node.js version too old (v20.12.2)        | P0       | Low (install) | **DONE** — upgraded to v22.16.0 LTS |
+| 2   | Build fails: missing Suspense boundary    | P0       | Low (code)    | **DONE**                            |
+| 3   | ESLint: require() in search route         | P1       | Trivial       | **DONE**                            |
+| 4   | ESLint: setState in useEffect             | P1       | Low           | **DONE**                            |
+| 5   | ESLint: unused categorySlug               | P1       | Trivial       | **DONE**                            |
+| 6   | Vuln: postcss XSS (in next)               | P2       | Wait          | BLOCKED — upstream                  |
+| 7   | Vuln: esbuild dev server (in drizzle-kit) | P2       | Wait          | BLOCKED — upstream                  |
+| 8   | Add engines field                         | P3       | Trivial       | **DONE**                            |
+| 9   | Pin next-auth version                     | P3       | Trivial       | **DONE**                            |
+| 10  | Regenerate lockfile                       | P3       | Low           | **DONE**                            |
 
 All actionable items complete. Only P2 items remain (waiting on upstream patches).

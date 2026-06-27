@@ -13,10 +13,7 @@ import { auth } from "@/lib/auth";
 import { createReplySchema } from "@/lib/validators";
 import { generateId } from "@/lib/uuid";
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id: threadId } = await params;
 
   const replies = await db
@@ -28,10 +25,7 @@ export async function GET(
   return NextResponse.json(replies);
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id: threadId } = await params;
   const session = await auth();
   if (!session?.user?.id) {
@@ -43,7 +37,7 @@ export async function POST(
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Validation failed", details: parsed.error.flatten() },
-      { status: 400 }
+      { status: 400 },
     );
   }
 

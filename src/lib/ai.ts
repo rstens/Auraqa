@@ -40,21 +40,23 @@ export async function summarizeArticle(content: string): Promise<string | null> 
     const response = await client.messages.create({
       model: MODEL,
       max_tokens: 256,
-      system: [{
-        type: "text",
-        text: SYSTEM_PROMPT,
-        cache_control: { type: "ephemeral" },
-      }],
+      system: [
+        {
+          type: "text",
+          text: SYSTEM_PROMPT,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
       output_config: { effort: "low" },
-      messages: [{
-        role: "user",
-        content: `Summarize the following software testing article in 2-3 concise sentences. Focus on key takeaways for QA professionals.\n\n${content}`,
-      }],
+      messages: [
+        {
+          role: "user",
+          content: `Summarize the following software testing article in 2-3 concise sentences. Focus on key takeaways for QA professionals.\n\n${content}`,
+        },
+      ],
     });
 
-    const textBlock = response.content.find(
-      (b): b is Anthropic.TextBlock => b.type === "text"
-    );
+    const textBlock = response.content.find((b): b is Anthropic.TextBlock => b.type === "text");
     return textBlock?.text ?? null;
   } catch (error) {
     if (error instanceof Anthropic.RateLimitError) {
@@ -79,31 +81,34 @@ export async function summarizeArticle(content: string): Promise<string | null> 
  */
 export async function suggestAnswer(
   question: string,
-  existingAnswers: string[] = []
+  existingAnswers: string[] = [],
 ): Promise<string | null> {
-  const context = existingAnswers.length > 0
-    ? `\n\nExisting answers (supplement, don't repeat):\n${existingAnswers.join("\n---\n")}`
-    : "";
+  const context =
+    existingAnswers.length > 0
+      ? `\n\nExisting answers (supplement, don't repeat):\n${existingAnswers.join("\n---\n")}`
+      : "";
 
   try {
     const response = await client.messages.create({
       model: MODEL,
       max_tokens: 1024,
-      system: [{
-        type: "text",
-        text: SYSTEM_PROMPT,
-        cache_control: { type: "ephemeral" },
-      }],
+      system: [
+        {
+          type: "text",
+          text: SYSTEM_PROMPT,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
       output_config: { effort: "medium" },
-      messages: [{
-        role: "user",
-        content: `You are an expert software tester. A user asked the following question on a QA community forum. Suggest a helpful, accurate answer in Markdown format.\n\nQuestion:\n${question}${context}`,
-      }],
+      messages: [
+        {
+          role: "user",
+          content: `You are an expert software tester. A user asked the following question on a QA community forum. Suggest a helpful, accurate answer in Markdown format.\n\nQuestion:\n${question}${context}`,
+        },
+      ],
     });
 
-    const textBlock = response.content.find(
-      (b): b is Anthropic.TextBlock => b.type === "text"
-    );
+    const textBlock = response.content.find((b): b is Anthropic.TextBlock => b.type === "text");
     return textBlock?.text ?? null;
   } catch (error) {
     if (error instanceof Anthropic.APIError) {
@@ -122,19 +127,18 @@ export async function suggestAnswer(
  * @param existingTags - Available tags in the system
  * @returns Array of suggested tag names, or empty array on failure
  */
-export async function suggestTags(
-  content: string,
-  existingTags: string[]
-): Promise<string[]> {
+export async function suggestTags(content: string, existingTags: string[]): Promise<string[]> {
   try {
     const response = await client.messages.create({
       model: MODEL,
       max_tokens: 256,
-      system: [{
-        type: "text",
-        text: SYSTEM_PROMPT,
-        cache_control: { type: "ephemeral" },
-      }],
+      system: [
+        {
+          type: "text",
+          text: SYSTEM_PROMPT,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
       output_config: {
         effort: "low",
         format: {
@@ -152,15 +156,15 @@ export async function suggestTags(
           },
         },
       },
-      messages: [{
-        role: "user",
-        content: `Suggest 2-5 relevant tags for the following content. Choose from existing tags when possible.\n\nAvailable tags: ${existingTags.join(", ")}\n\nContent:\n${content.substring(0, 2000)}`,
-      }],
+      messages: [
+        {
+          role: "user",
+          content: `Suggest 2-5 relevant tags for the following content. Choose from existing tags when possible.\n\nAvailable tags: ${existingTags.join(", ")}\n\nContent:\n${content.substring(0, 2000)}`,
+        },
+      ],
     });
 
-    const textBlock = response.content.find(
-      (b): b is Anthropic.TextBlock => b.type === "text"
-    );
+    const textBlock = response.content.find((b): b is Anthropic.TextBlock => b.type === "text");
     if (!textBlock) return [];
 
     const parsed = JSON.parse(textBlock.text) as { tags: string[] };
@@ -184,17 +188,19 @@ export async function suggestTags(
  */
 export async function enhanceSearch(
   query: string,
-  availableTags: string[]
+  availableTags: string[],
 ): Promise<{ terms: string[]; tags: string[] }> {
   try {
     const response = await client.messages.create({
       model: MODEL,
       max_tokens: 256,
-      system: [{
-        type: "text",
-        text: SYSTEM_PROMPT,
-        cache_control: { type: "ephemeral" },
-      }],
+      system: [
+        {
+          type: "text",
+          text: SYSTEM_PROMPT,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
       output_config: {
         effort: "low",
         format: {
@@ -216,15 +222,15 @@ export async function enhanceSearch(
           },
         },
       },
-      messages: [{
-        role: "user",
-        content: `Convert this search query into structured search terms and matching tags.\n\nQuery: "${query}"\n\nAvailable tags: ${availableTags.join(", ")}\n\nReturn key search terms for full-text search and relevant tags.`,
-      }],
+      messages: [
+        {
+          role: "user",
+          content: `Convert this search query into structured search terms and matching tags.\n\nQuery: "${query}"\n\nAvailable tags: ${availableTags.join(", ")}\n\nReturn key search terms for full-text search and relevant tags.`,
+        },
+      ],
     });
 
-    const textBlock = response.content.find(
-      (b): b is Anthropic.TextBlock => b.type === "text"
-    );
+    const textBlock = response.content.find((b): b is Anthropic.TextBlock => b.type === "text");
     if (!textBlock) return { terms: [query], tags: [] };
 
     return JSON.parse(textBlock.text) as { terms: string[]; tags: string[] };

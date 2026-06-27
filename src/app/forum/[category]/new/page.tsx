@@ -13,11 +13,7 @@ import { ThreadForm } from "@/components/forum/thread-form";
 
 export const dynamic = "force-dynamic";
 
-export default async function NewThreadPage({
-  params,
-}: {
-  params: Promise<{ category: string }>;
-}) {
+export default async function NewThreadPage({ params }: { params: Promise<{ category: string }> }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 

@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Invalid search query", details: parsed.error.flatten() },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -47,11 +47,8 @@ export async function GET(request: NextRequest) {
       .where(
         and(
           eq(articles.status, "published"),
-          or(
-            ilike(articles.title, pattern),
-            ilike(articles.content, pattern)
-          )
-        )
+          or(ilike(articles.title, pattern), ilike(articles.content, pattern)),
+        ),
       )
       .orderBy(desc(articles.voteScore))
       .limit(limit);
@@ -64,7 +61,7 @@ export async function GET(request: NextRequest) {
         excerpt: a.summary ?? "",
         slug: a.slug,
         url: `/articles/${a.slug}`,
-      }))
+      })),
     );
   }
 
@@ -76,12 +73,7 @@ export async function GET(request: NextRequest) {
         content: forumThreads.content,
       })
       .from(forumThreads)
-      .where(
-        or(
-          ilike(forumThreads.title, pattern),
-          ilike(forumThreads.content, pattern)
-        )
-      )
+      .where(or(ilike(forumThreads.title, pattern), ilike(forumThreads.content, pattern)))
       .orderBy(desc(forumThreads.voteScore))
       .limit(limit);
 
@@ -93,7 +85,7 @@ export async function GET(request: NextRequest) {
         excerpt: t.content.slice(0, 200),
         slug: t.id,
         url: `/forum/thread/${t.id}`,
-      }))
+      })),
     );
   }
 
@@ -109,11 +101,8 @@ export async function GET(request: NextRequest) {
       .where(
         and(
           eq(tools.status, "approved"),
-          or(
-            ilike(tools.name, pattern),
-            ilike(tools.description, pattern)
-          )
-        )
+          or(ilike(tools.name, pattern), ilike(tools.description, pattern)),
+        ),
       )
       .orderBy(desc(tools.avgRating))
       .limit(limit);
@@ -126,7 +115,7 @@ export async function GET(request: NextRequest) {
         excerpt: t.description.slice(0, 200),
         slug: t.slug,
         url: `/tools/${t.slug}`,
-      }))
+      })),
     );
   }
 
@@ -143,8 +132,8 @@ export async function GET(request: NextRequest) {
         or(
           ilike(glossaryTerms.term, pattern),
           ilike(glossaryTerms.definition, pattern),
-          ilike(glossaryTerms.abbreviation, pattern)
-        )
+          ilike(glossaryTerms.abbreviation, pattern),
+        ),
       )
       .limit(limit);
 
@@ -156,7 +145,7 @@ export async function GET(request: NextRequest) {
         excerpt: g.definition.slice(0, 200),
         slug: g.id,
         url: `/glossary?q=${encodeURIComponent(g.term)}`,
-      }))
+      })),
     );
   }
 

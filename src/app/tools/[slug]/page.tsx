@@ -15,19 +15,11 @@ import { ReviewForm } from "@/components/tools/review-form";
 
 export const dynamic = "force-dynamic";
 
-export default async function ToolPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function ToolPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const session = await auth();
 
-  const toolResult = await db
-    .select()
-    .from(tools)
-    .where(eq(tools.slug, slug))
-    .limit(1);
+  const toolResult = await db.select().from(tools).where(eq(tools.slug, slug)).limit(1);
 
   const tool = toolResult[0];
   if (!tool) notFound();
@@ -49,14 +41,19 @@ export default async function ToolPage({
 
   return (
     <div data-testid="tool-detail" className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
-      <Link href="/tools" data-testid="back-to-tools" className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400">
+      <Link
+        href="/tools"
+        data-testid="back-to-tools"
+        className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400"
+      >
         &larr; All tools
       </Link>
 
-      <div data-testid="tool-info" className="mt-4 rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-          {tool.name}
-        </h1>
+      <div
+        data-testid="tool-info"
+        className="mt-4 rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800"
+      >
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">{tool.name}</h1>
 
         <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
           {tool.category && (
@@ -113,9 +110,7 @@ export default async function ToolPage({
                   {timeAgo(review.createdAt)}
                 </span>
               </div>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                {review.content}
-              </p>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{review.content}</p>
               <span className="mt-2 block text-xs text-slate-500 dark:text-slate-400">
                 {review.authorName ?? review.authorUsername ?? "Anonymous"}
               </span>
@@ -127,9 +122,7 @@ export default async function ToolPage({
       {/* Review form */}
       {session?.user ? (
         <div className="mt-8">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-            Write a Review
-          </h3>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Write a Review</h3>
           <div className="mt-4">
             <ReviewForm toolSlug={slug} />
           </div>

@@ -32,9 +32,7 @@ describe("postJson", () => {
     const [url, init] = mock.mock.calls[0];
     expect(url).toBe("/api/articles");
     expect(init.method).toBe("POST");
-    expect((init.headers as Record<string, string>)["Content-Type"]).toBe(
-      "application/json"
-    );
+    expect((init.headers as Record<string, string>)["Content-Type"]).toBe("application/json");
     expect(JSON.parse(init.body as string)).toEqual({ title: "Hello" });
   });
 
@@ -59,9 +57,7 @@ describe("postJson", () => {
       json: async () => ({ error: "Username already taken" }),
     });
 
-    await expect(postJson("/api/profile", {})).rejects.toThrow(
-      "Username already taken"
-    );
+    await expect(postJson("/api/profile", {})).rejects.toThrow("Username already taken");
   });
 
   it("throws a generic 'Request failed (status)' when error body has no .error", async () => {
@@ -72,9 +68,7 @@ describe("postJson", () => {
       json: async () => ({}),
     });
 
-    await expect(postJson("/api/foo", {})).rejects.toThrow(
-      "Request failed (500)"
-    );
+    await expect(postJson("/api/foo", {})).rejects.toThrow("Request failed (500)");
   });
 
   it("falls back to the generic message when error body isn't valid JSON", async () => {
@@ -87,9 +81,7 @@ describe("postJson", () => {
       },
     });
 
-    await expect(postJson("/api/foo", {})).rejects.toThrow(
-      "Request failed (502)"
-    );
+    await expect(postJson("/api/foo", {})).rejects.toThrow("Request failed (502)");
   });
 
   it("serializes nested objects in the body", async () => {

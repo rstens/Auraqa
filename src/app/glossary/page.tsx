@@ -6,10 +6,7 @@ import { GlossaryClient } from "@/components/glossary/glossary-client";
 export const dynamic = "force-dynamic";
 
 export default async function GlossaryPage() {
-  const terms = await db
-    .select()
-    .from(glossaryTerms)
-    .orderBy(asc(glossaryTerms.term));
+  const terms = await db.select().from(glossaryTerms).orderBy(asc(glossaryTerms.term));
 
   const normalizedTerms = terms.map((t) => ({
     id: t.id,

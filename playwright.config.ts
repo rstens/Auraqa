@@ -21,11 +21,7 @@ export default defineConfig({
   timeout: 30000,
   retries: isCI ? 1 : 0,
   reporter: isCI
-    ? [
-        ["list"],
-        ["html", { outputFolder: "playwright-report", open: "never" }],
-        ["github"],
-      ]
+    ? [["list"], ["html", { outputFolder: "playwright-report", open: "never" }], ["github"]]
     : [["list"], ["html", { outputFolder: "playwright-report", open: "never" }]],
   use: {
     baseURL: "http://localhost:3000",
@@ -34,9 +30,7 @@ export default defineConfig({
     screenshot: "only-on-failure",
     video: "retain-on-failure",
   },
-  projects: [
-    { name: "chromium", use: { browserName: "chromium" } },
-  ],
+  projects: [{ name: "chromium", use: { browserName: "chromium" } }],
   webServer: {
     command: "npm run dev",
     port: 3000,

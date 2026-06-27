@@ -24,11 +24,7 @@ const credentialsProvider = Credentials({
 
     // Admin login — available in all environments
     if (username === "admin" && password === "admin") {
-      const existing = await db
-        .select()
-        .from(users)
-        .where(eq(users.username, "admin"))
-        .limit(1);
+      const existing = await db.select().from(users).where(eq(users.username, "admin")).limit(1);
 
       if (existing.length > 0) {
         return { id: existing[0].id, email: existing[0].email, name: existing[0].name };
@@ -52,11 +48,7 @@ const credentialsProvider = Credentials({
     const email = (credentials.email as string) || "dev@auraqa.local";
     const name = (credentials.name as string) || "Dev User";
 
-    const existing = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
+    const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
     if (existing.length > 0) {
       return { id: existing[0].id, email: existing[0].email, name: existing[0].name };
@@ -122,8 +114,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         session.user.id = typeof token.id === "string" ? token.id : "";
         session.user.role = typeof token.role === "string" ? token.role : "user";
-        session.user.username =
-          typeof token.username === "string" ? token.username : null;
+        session.user.username = typeof token.username === "string" ? token.username : null;
       }
       return session;
     },
@@ -131,13 +122,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   events: {
     async createUser({ user }) {
       if (!user.id) return;
-      const username =
-        user.email?.split("@")[0] ??
-        `user-${user.id.slice(0, 8)}`;
-      await db
-        .update(users)
-        .set({ username, bio: "" })
-        .where(eq(users.id, user.id));
+      const username = user.email?.split("@")[0] ?? `user-${user.id.slice(0, 8)}`;
+      await db.update(users).set({ username, bio: "" }).where(eq(users.id, user.id));
     },
   },
   pages: {

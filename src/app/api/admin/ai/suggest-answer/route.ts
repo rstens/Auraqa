@@ -21,7 +21,11 @@ export async function POST(request: NextRequest) {
 
   const { threadId } = parsed.data;
 
-  const threadResult = await db.select().from(forumThreads).where(eq(forumThreads.id, threadId)).limit(1);
+  const threadResult = await db
+    .select()
+    .from(forumThreads)
+    .where(eq(forumThreads.id, threadId))
+    .limit(1);
   if (threadResult.length === 0) {
     return NextResponse.json({ error: "Thread not found" }, { status: 404 });
   }

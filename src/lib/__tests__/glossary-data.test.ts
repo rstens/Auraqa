@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { GLOSSARY_TERMS, CATEGORIES, getCategoryInfo, type GlossaryCategory } from "../glossary-data";
+import {
+  GLOSSARY_TERMS,
+  CATEGORIES,
+  getCategoryInfo,
+  type GlossaryCategory,
+} from "../glossary-data";
 
 describe("CATEGORIES", () => {
   it("has 7 categories", () => {
@@ -68,7 +73,10 @@ describe("GLOSSARY_TERMS", () => {
     const validIds = new Set(GLOSSARY_TERMS.map((t) => t.id));
     for (const term of GLOSSARY_TERMS) {
       for (const relId of term.relatedTerms) {
-        expect(validIds.has(relId), `Term "${term.term}" references non-existent relatedTerm "${relId}"`).toBe(true);
+        expect(
+          validIds.has(relId),
+          `Term "${term.term}" references non-existent relatedTerm "${relId}"`,
+        ).toBe(true);
       }
     }
   });
@@ -77,20 +85,29 @@ describe("GLOSSARY_TERMS", () => {
     const validIds = new Set(GLOSSARY_TERMS.map((t) => t.id));
     for (const term of GLOSSARY_TERMS) {
       for (const seeId of term.seeAlso) {
-        expect(validIds.has(seeId), `Term "${term.term}" references non-existent seeAlso "${seeId}"`).toBe(true);
+        expect(
+          validIds.has(seeId),
+          `Term "${term.term}" references non-existent seeAlso "${seeId}"`,
+        ).toBe(true);
       }
     }
   });
 
   it("no term references itself in relatedTerms", () => {
     for (const term of GLOSSARY_TERMS) {
-      expect(term.relatedTerms.includes(term.id), `Term "${term.term}" references itself in relatedTerms`).toBe(false);
+      expect(
+        term.relatedTerms.includes(term.id),
+        `Term "${term.term}" references itself in relatedTerms`,
+      ).toBe(false);
     }
   });
 
   it("no term references itself in seeAlso", () => {
     for (const term of GLOSSARY_TERMS) {
-      expect(term.seeAlso.includes(term.id), `Term "${term.term}" references itself in seeAlso`).toBe(false);
+      expect(
+        term.seeAlso.includes(term.id),
+        `Term "${term.term}" references itself in seeAlso`,
+      ).toBe(false);
     }
   });
 
@@ -114,7 +131,10 @@ describe("GLOSSARY_TERMS", () => {
 
   it("definitions are non-trivial (at least 20 chars)", () => {
     for (const term of GLOSSARY_TERMS) {
-      expect(term.definition.length, `Term "${term.term}" has a very short definition`).toBeGreaterThanOrEqual(20);
+      expect(
+        term.definition.length,
+        `Term "${term.term}" has a very short definition`,
+      ).toBeGreaterThanOrEqual(20);
     }
   });
 });

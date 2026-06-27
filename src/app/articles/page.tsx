@@ -54,9 +54,7 @@ export default async function ArticlesPage() {
     <div data-testid="articles-page" className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-            Knowledge Base
-          </h1>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Knowledge Base</h1>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
             Articles on testing methodologies, tools, and best practices
           </p>
@@ -72,12 +70,19 @@ export default async function ArticlesPage() {
 
       <div data-testid="articles-list" className="mt-8 space-y-4">
         {articleList.length === 0 ? (
-          <p data-testid="articles-empty" className="py-12 text-center text-slate-500 dark:text-slate-400">
+          <p
+            data-testid="articles-empty"
+            className="py-12 text-center text-slate-500 dark:text-slate-400"
+          >
             No articles yet. Be the first to write one!
           </p>
         ) : (
           articleList.map((article) => (
-            <ArticleCard key={article.id} article={article} tags={tagsByArticle.get(article.id) ?? []} />
+            <ArticleCard
+              key={article.id}
+              article={article}
+              tags={tagsByArticle.get(article.id) ?? []}
+            />
           ))
         )}
       </div>
@@ -113,9 +118,7 @@ async function ArticleCard({
       data-testid={`article-card-${article.slug}`}
       className="block rounded-lg border border-slate-200 bg-white p-6 transition-all hover:border-slate-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600"
     >
-      <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-        {article.title}
-      </h2>
+      <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{article.title}</h2>
       {summaryHtml && (
         <div
           className="prose prose-sm prose-slate mt-2 max-w-none dark:prose-invert"
@@ -125,7 +128,10 @@ async function ArticleCard({
       {articleTagNames.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {articleTagNames.map((tag) => (
-            <span key={tag} className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+            <span
+              key={tag}
+              className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+            >
               {tag}
             </span>
           ))}

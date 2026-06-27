@@ -23,9 +23,7 @@ export async function GET(request: NextRequest) {
     query = query.where(eq(forumThreads.categoryId, Number(categoryId))) as typeof query;
   }
 
-  const results = await query
-    .orderBy(desc(forumThreads.createdAt))
-    .limit(limit);
+  const results = await query.orderBy(desc(forumThreads.createdAt)).limit(limit);
 
   return NextResponse.json(results);
 }
@@ -41,7 +39,7 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Validation failed", details: parsed.error.flatten() },
-      { status: 400 }
+      { status: 400 },
     );
   }
 

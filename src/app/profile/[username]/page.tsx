@@ -8,11 +8,7 @@ import { UserAvatar } from "@/components/shared/user-avatar";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProfilePage({
-  params,
-}: {
-  params: Promise<{ username: string }>;
-}) {
+export default async function ProfilePage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
 
   const result = await db
@@ -35,7 +31,12 @@ export default async function ProfilePage({
 
   const [articleList, articleCount, threadCount, replyCount] = await Promise.all([
     db
-      .select({ id: articles.id, title: articles.title, slug: articles.slug, publishedAt: articles.publishedAt })
+      .select({
+        id: articles.id,
+        title: articles.title,
+        slug: articles.slug,
+        publishedAt: articles.publishedAt,
+      })
       .from(articles)
       .where(eq(articles.authorId, user.id))
       .orderBy(desc(articles.publishedAt))
@@ -48,11 +49,7 @@ export default async function ProfilePage({
   return (
     <div data-testid="profile-page" className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex items-center gap-5">
-        <UserAvatar
-          src={user.image}
-          name={user.name ?? user.username}
-          size="lg"
-        />
+        <UserAvatar src={user.image} name={user.name ?? user.username} size="lg" />
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -71,7 +68,9 @@ export default async function ProfilePage({
       </div>
 
       {user.bio && (
-        <p data-testid="profile-bio" className="mt-4 text-slate-700 dark:text-slate-300">{user.bio}</p>
+        <p data-testid="profile-bio" className="mt-4 text-slate-700 dark:text-slate-300">
+          {user.bio}
+        </p>
       )}
 
       <div data-testid="profile-stats" className="mt-6 grid gap-4 sm:grid-cols-4">
@@ -94,7 +93,9 @@ export default async function ProfilePage({
               >
                 {article.title}
                 {article.publishedAt && (
-                  <span className="ml-2 text-xs text-slate-500 dark:text-slate-400">{timeAgo(article.publishedAt)}</span>
+                  <span className="ml-2 text-xs text-slate-500 dark:text-slate-400">
+                    {timeAgo(article.publishedAt)}
+                  </span>
                 )}
               </Link>
             ))}

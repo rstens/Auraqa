@@ -61,7 +61,8 @@ describe("createArticleSchema", () => {
 
   it("rejects more than 10 tags", () => {
     const result = createArticleSchema.safeParse({
-      title: "x", content: "x",
+      title: "x",
+      content: "x",
       tags: Array.from({ length: 11 }, (_, i) => `tag${i}`),
     });
     expect(result.success).toBe(false);
@@ -94,7 +95,9 @@ describe("updateArticleSchema", () => {
 describe("createThreadSchema", () => {
   it("accepts valid thread", () => {
     const result = createThreadSchema.safeParse({
-      title: "Question", content: "Details", categoryId: 1,
+      title: "Question",
+      content: "Details",
+      categoryId: 1,
     });
     expect(result.success).toBe(true);
   });
@@ -163,12 +166,20 @@ describe("createToolSchema", () => {
   });
 
   it("rejects invalid URL", () => {
-    const result = createToolSchema.safeParse({ name: "T", description: "D", websiteUrl: "not-a-url" });
+    const result = createToolSchema.safeParse({
+      name: "T",
+      description: "D",
+      websiteUrl: "not-a-url",
+    });
     expect(result.success).toBe(false);
   });
 
   it("accepts valid URL", () => {
-    const result = createToolSchema.safeParse({ name: "T", description: "D", websiteUrl: "https://playwright.dev" });
+    const result = createToolSchema.safeParse({
+      name: "T",
+      description: "D",
+      websiteUrl: "https://playwright.dev",
+    });
     expect(result.success).toBe(true);
   });
 });
@@ -252,28 +263,34 @@ describe("castVoteSchema", () => {
   });
 
   it("rejects value of 0", () => {
-    expect(castVoteSchema.safeParse({
-      targetType: "article",
-      targetId: "01926a3b-4c5d-7e8f-9012-3456789abcde",
-      value: 0,
-    }).success).toBe(false);
+    expect(
+      castVoteSchema.safeParse({
+        targetType: "article",
+        targetId: "01926a3b-4c5d-7e8f-9012-3456789abcde",
+        value: 0,
+      }).success,
+    ).toBe(false);
   });
 
   it("rejects invalid targetType", () => {
-    expect(castVoteSchema.safeParse({
-      targetType: "comment",
-      targetId: "01926a3b-4c5d-7e8f-9012-3456789abcde",
-      value: 1,
-    }).success).toBe(false);
+    expect(
+      castVoteSchema.safeParse({
+        targetType: "comment",
+        targetId: "01926a3b-4c5d-7e8f-9012-3456789abcde",
+        value: 1,
+      }).success,
+    ).toBe(false);
   });
 
   it("accepts all valid target types", () => {
     for (const targetType of ["article", "thread", "reply"]) {
-      expect(castVoteSchema.safeParse({
-        targetType,
-        targetId: "01926a3b-4c5d-7e8f-9012-3456789abcde",
-        value: 1,
-      }).success).toBe(true);
+      expect(
+        castVoteSchema.safeParse({
+          targetType,
+          targetId: "01926a3b-4c5d-7e8f-9012-3456789abcde",
+          value: 1,
+        }).success,
+      ).toBe(true);
     }
   });
 });
@@ -337,9 +354,7 @@ describe("updateProfileSchema", () => {
   });
 
   it("accepts a valid username", () => {
-    expect(
-      updateProfileSchema.safeParse({ username: "alice_42" }).success
-    ).toBe(true);
+    expect(updateProfileSchema.safeParse({ username: "alice_42" }).success).toBe(true);
   });
 
   it("rejects empty username", () => {
@@ -347,9 +362,7 @@ describe("updateProfileSchema", () => {
   });
 
   it("rejects username over 50 chars", () => {
-    expect(
-      updateProfileSchema.safeParse({ username: "a".repeat(51) }).success
-    ).toBe(false);
+    expect(updateProfileSchema.safeParse({ username: "a".repeat(51) }).success).toBe(false);
   });
 
   it("accepts all three fields together", () => {
@@ -393,17 +406,26 @@ describe("glossaryTermSchema", () => {
   });
 
   it("rejects empty term", () => {
-    expect(glossaryTermSchema.safeParse({ term: "", definition: "x", category: "x" }).success).toBe(false);
+    expect(glossaryTermSchema.safeParse({ term: "", definition: "x", category: "x" }).success).toBe(
+      false,
+    );
   });
 
   it("rejects empty definition", () => {
-    expect(glossaryTermSchema.safeParse({ term: "x", definition: "", category: "x" }).success).toBe(false);
+    expect(glossaryTermSchema.safeParse({ term: "x", definition: "", category: "x" }).success).toBe(
+      false,
+    );
   });
 
   it("rejects abbreviation over 20 chars", () => {
-    expect(glossaryTermSchema.safeParse({
-      term: "x", definition: "x", category: "x", abbreviation: "a".repeat(21),
-    }).success).toBe(false);
+    expect(
+      glossaryTermSchema.safeParse({
+        term: "x",
+        definition: "x",
+        category: "x",
+        abbreviation: "a".repeat(21),
+      }).success,
+    ).toBe(false);
   });
 });
 
@@ -423,9 +445,11 @@ describe("adminAiActionSchema", () => {
 
 describe("adminSuggestAnswerSchema", () => {
   it("accepts valid UUID", () => {
-    expect(adminSuggestAnswerSchema.safeParse({
-      threadId: "01926a3b-4c5d-7e8f-9012-3456789abcde",
-    }).success).toBe(true);
+    expect(
+      adminSuggestAnswerSchema.safeParse({
+        threadId: "01926a3b-4c5d-7e8f-9012-3456789abcde",
+      }).success,
+    ).toBe(true);
   });
 
   it("rejects non-UUID", () => {

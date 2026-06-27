@@ -15,15 +15,11 @@ import { updateArticleSchema } from "@/lib/validators";
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
+  { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
 
-  const result = await db
-    .select()
-    .from(articles)
-    .where(eq(articles.slug, slug))
-    .limit(1);
+  const result = await db.select().from(articles).where(eq(articles.slug, slug)).limit(1);
 
   if (result.length === 0) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -32,21 +28,14 @@ export async function GET(
   return NextResponse.json(result[0]);
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const existing = await db
-    .select()
-    .from(articles)
-    .where(eq(articles.slug, slug))
-    .limit(1);
+  const existing = await db.select().from(articles).where(eq(articles.slug, slug)).limit(1);
 
   if (existing.length === 0) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -61,7 +50,7 @@ export async function PUT(
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Validation failed", details: parsed.error.flatten() },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -81,7 +70,7 @@ export async function PUT(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
+  { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
   const session = await auth();
@@ -89,11 +78,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const existing = await db
-    .select()
-    .from(articles)
-    .where(eq(articles.slug, slug))
-    .limit(1);
+  const existing = await db.select().from(articles).where(eq(articles.slug, slug)).limit(1);
 
   if (existing.length === 0) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });

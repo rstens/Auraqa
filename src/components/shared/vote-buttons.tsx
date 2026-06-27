@@ -38,10 +38,11 @@ export function VoteButtons({
     // actual delta (toggle/flip/new) replaces this estimate.
     setScore((s) => s + value);
     try {
-      const { scoreDelta } = await postJson<{ scoreDelta: number }>(
-        "/api/votes",
-        { targetType, targetId, value }
-      );
+      const { scoreDelta } = await postJson<{ scoreDelta: number }>("/api/votes", {
+        targetType,
+        targetId,
+        value,
+      });
       setScore(previous + scoreDelta);
     } catch (err) {
       console.error("VoteButtons:", err);
@@ -56,7 +57,11 @@ export function VoteButtons({
   const title = canVote ? undefined : "Sign in to vote";
 
   return (
-    <div className="flex flex-col items-center" title={title} data-testid={`vote-${targetType}-${targetId}`}>
+    <div
+      className="flex flex-col items-center"
+      title={title}
+      data-testid={`vote-${targetType}-${targetId}`}
+    >
       <button
         type="button"
         aria-label="Upvote"
@@ -65,7 +70,13 @@ export function VoteButtons({
         disabled={!canVote}
         className={btnBase}
       >
-        <svg className={iconSize} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+        <svg
+          className={iconSize}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          strokeWidth={2}
+        >
           <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
         </svg>
       </button>
@@ -83,7 +94,13 @@ export function VoteButtons({
         disabled={!canVote}
         className={btnBase}
       >
-        <svg className={iconSize} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+        <svg
+          className={iconSize}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          strokeWidth={2}
+        >
           <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
         </svg>
       </button>

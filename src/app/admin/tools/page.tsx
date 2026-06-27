@@ -41,15 +41,32 @@ export default async function AdminToolsPage({
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Tools</h1>
         <div data-testid="tool-status-filters" className="flex gap-2">
           <FilterLink href="/admin/tools" label="All" active={!status} />
-          <FilterLink href="/admin/tools?status=pending" label="Pending" active={status === "pending"} />
-          <FilterLink href="/admin/tools?status=approved" label="Approved" active={status === "approved"} />
-          <FilterLink href="/admin/tools?status=rejected" label="Rejected" active={status === "rejected"} />
+          <FilterLink
+            href="/admin/tools?status=pending"
+            label="Pending"
+            active={status === "pending"}
+          />
+          <FilterLink
+            href="/admin/tools?status=approved"
+            label="Approved"
+            active={status === "approved"}
+          />
+          <FilterLink
+            href="/admin/tools?status=rejected"
+            label="Rejected"
+            active={status === "rejected"}
+          />
         </div>
       </div>
 
       <div data-testid="admin-tools-list" className="mt-6 space-y-2">
         {toolList.length === 0 ? (
-          <p data-testid="admin-tools-empty" className="py-12 text-center text-slate-500 dark:text-slate-400">No tools found.</p>
+          <p
+            data-testid="admin-tools-empty"
+            className="py-12 text-center text-slate-500 dark:text-slate-400"
+          >
+            No tools found.
+          </p>
         ) : (
           toolList.map((tool) => (
             <Link
@@ -63,11 +80,14 @@ export default async function AdminToolsPage({
                   <ToolStatusBadge status={tool.status} />
                   <span className="font-medium text-slate-900 dark:text-white">{tool.name}</span>
                   {tool.category && (
-                    <span className="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-700 dark:text-slate-400">{tool.category}</span>
+                    <span className="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-700 dark:text-slate-400">
+                      {tool.category}
+                    </span>
                   )}
                 </div>
                 <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  by {tool.submitterName ?? tool.submitterUsername ?? "Anonymous"} &middot; {timeAgo(tool.createdAt)}
+                  by {tool.submitterName ?? tool.submitterUsername ?? "Anonymous"} &middot;{" "}
+                  {timeAgo(tool.createdAt)}
                 </div>
               </div>
             </Link>
@@ -80,9 +100,11 @@ export default async function AdminToolsPage({
 
 function ToolStatusBadge({ status }: { status: string }) {
   const styles =
-    status === "approved" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" :
-    status === "rejected" ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" :
-    "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400";
+    status === "approved"
+      ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+      : status === "rejected"
+        ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+        : "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400";
   return <span className={`rounded px-2 py-0.5 text-xs font-medium ${styles}`}>{status}</span>;
 }
 

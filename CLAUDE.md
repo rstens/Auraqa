@@ -55,6 +55,7 @@ Credentials login (admin: username `admin` / password `admin`) + OAuth via GitHu
 ### Admin Dashboard (/admin)
 
 Protected by `isAdmin()` in admin layout. Features:
+
 - Dashboard with stats and pending approvals
 - Article management: list, approve/publish, delete, AI summarize, AI suggest tags
 - Tool management: list, approve/reject, delete (tools submit as "pending")
@@ -95,17 +96,20 @@ All client-side forms use safe error parsing: `res.text()` then `try { JSON.pars
 ## API Routes
 
 Public:
+
 - `GET /api/articles`, `GET /api/articles/[slug]`
 - `GET /api/forum/threads`, `GET /api/tools`
 - `GET /api/search` — AI-powered query expansion
 
 Auth required:
+
 - `POST /api/articles`, `PUT /api/articles/[slug]`
 - `POST /api/forum/threads`, `POST /api/forum/threads/[id]/replies`
 - `POST /api/tools` (submits as "pending"), `POST /api/tools/[slug]/reviews`
 - `POST /api/votes`, `PUT /api/profile`
 
 Admin only (`/api/admin/*`):
+
 - `GET /api/admin/stats`
 - `PUT/DELETE /api/admin/articles/[slug]`, `POST /api/admin/articles/[slug]/ai`
 - `PUT/DELETE /api/admin/tools/[slug]`
@@ -128,6 +132,7 @@ docker compose -f docker/docker-compose.yml up -d                               
 ```
 
 After first start or volume recreation, push schema and seed:
+
 ```bash
 DATABASE_URL=postgres://auraqa:auraqa_password@localhost:5432/auraqa npm run db:push
 DATABASE_URL=postgres://auraqa:auraqa_password@localhost:5432/auraqa npm run db:seed

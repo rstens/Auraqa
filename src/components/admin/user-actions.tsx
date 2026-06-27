@@ -28,7 +28,9 @@ export function UserActions({
       if (!res.ok) {
         const text = await res.text();
         let msg = "Failed to update role";
-        try { msg = JSON.parse(text).error ?? msg; } catch {}
+        try {
+          msg = JSON.parse(text).error ?? msg;
+        } catch {}
         throw new Error(msg);
       }
       router.refresh();
@@ -48,7 +50,9 @@ export function UserActions({
       if (!res.ok) {
         const text = await res.text();
         let msg = "Failed to delete user";
-        try { msg = JSON.parse(text).error ?? msg; } catch {}
+        try {
+          msg = JSON.parse(text).error ?? msg;
+        } catch {}
         throw new Error(msg);
       }
       router.push("/admin/users");
@@ -63,7 +67,10 @@ export function UserActions({
   return (
     <div data-testid="user-actions" className="space-y-4">
       {error && (
-        <div data-testid="user-actions-error" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+        <div
+          data-testid="user-actions-error"
+          className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400"
+        >
           {error}
         </div>
       )}

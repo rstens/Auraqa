@@ -17,11 +17,7 @@ import { VoteButtons } from "@/components/shared/vote-buttons";
 
 export const dynamic = "force-dynamic";
 
-export default async function ArticlePage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
   const result = await db
@@ -83,7 +79,10 @@ export default async function ArticlePage({
       </Link>
 
       {article.status !== "published" && (
-        <div data-testid="draft-banner" className="mt-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+        <div
+          data-testid="draft-banner"
+          className="mt-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
+        >
           This article is a <strong>draft</strong> and only visible to you.
         </div>
       )}
@@ -109,7 +108,10 @@ export default async function ArticlePage({
         {articleTagList.length > 0 && (
           <div data-testid="article-tags" className="mt-3 flex flex-wrap gap-2">
             {articleTagList.map((tag) => (
-              <span key={tag.name} className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+              <span
+                key={tag.name}
+                className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+              >
                 {tag.name}
               </span>
             ))}
@@ -118,9 +120,7 @@ export default async function ArticlePage({
 
         {aiSummaryHtml && (
           <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
-            <p className="text-xs font-medium text-blue-700 dark:text-blue-400">
-              AI Summary
-            </p>
+            <p className="text-xs font-medium text-blue-700 dark:text-blue-400">AI Summary</p>
             <div
               className="prose prose-sm mt-1 max-w-none text-blue-900 dark:text-blue-200"
               dangerouslySetInnerHTML={{ __html: aiSummaryHtml }}

@@ -11,24 +11,28 @@ AuraQA uses the **Claude API** via the `@anthropic-ai/sdk` TypeScript SDK for in
 ## Features
 
 ### 1. Article Summarization
+
 - **Endpoint:** `POST /api/ai/summarize`
 - **Trigger:** When an article is published
 - **Output:** 2-3 sentence summary cached in `articles.ai_summary`
 - **Effort:** `low` (simple extraction task)
 
 ### 2. Smart Search
+
 - **Endpoint:** `GET /api/search?q=...`
 - **Trigger:** On every search query
 - **Output:** Expanded search terms + matched tags (JSON schema output)
 - **Effort:** `low`
 
 ### 3. Answer Suggestions
+
 - **Endpoint:** `POST /api/ai/suggest`
 - **Trigger:** User clicks "Get AI Suggestion" on unanswered threads
 - **Output:** Markdown answer clearly labeled as AI-generated
 - **Effort:** `medium` (requires reasoning)
 
 ### 4. Tag Suggestions
+
 - **Trigger:** Inline during article/thread creation
 - **Output:** 2-5 suggested tags from the existing tag set (JSON schema output)
 - **Effort:** `low`
@@ -50,6 +54,7 @@ All AI functions return `null` (or empty arrays) on failure — the application 
 ## Cost Tracking
 
 Every AI call is logged to the `ai_interactions` table with:
+
 - `interaction_type` (summarize, search, suggest_answer, suggest_tags)
 - `input_tokens` and `output_tokens` from `response.usage`
 - `model` name

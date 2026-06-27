@@ -62,17 +62,17 @@ npm run dev
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | Next.js 15 (App Router, TypeScript) |
-| Styling | Tailwind CSS + shadcn/ui |
-| Database | PostgreSQL 18 |
-| ORM | Drizzle ORM |
-| Auth | NextAuth.js (Auth.js v5) |
-| AI | Claude API (Anthropic SDK) |
-| IDs | UUIDv7 |
-| Testing | Vitest + React Testing Library + Playwright |
-| Deployment | Docker multi-stage build |
+| Layer      | Technology                                  |
+| ---------- | ------------------------------------------- |
+| Framework  | Next.js 15 (App Router, TypeScript)         |
+| Styling    | Tailwind CSS + shadcn/ui                    |
+| Database   | PostgreSQL 18                               |
+| ORM        | Drizzle ORM                                 |
+| Auth       | NextAuth.js (Auth.js v5)                    |
+| AI         | Claude API (Anthropic SDK)                  |
+| IDs        | UUIDv7                                      |
+| Testing    | Vitest + React Testing Library + Playwright |
+| Deployment | Docker multi-stage build                    |
 
 ## Project Structure
 
@@ -87,22 +87,24 @@ src/
 
 ## Documentation
 
-| Document | Description |
-|----------|------------|
-| [Architecture](docs/ARCHITECTURE.md) | System overview and design decisions |
-| [Database](docs/DATABASE.md) | Schema design, PostgreSQL 18 features, migrations |
-| [API Reference](docs/API.md) | API endpoints with request/response examples |
+| Document                                 | Description                                        |
+| ---------------------------------------- | -------------------------------------------------- |
+| [Architecture](docs/ARCHITECTURE.md)     | System overview and design decisions               |
+| [Database](docs/DATABASE.md)             | Schema design, PostgreSQL 18 features, migrations  |
+| [API Reference](docs/API.md)             | API endpoints with request/response examples       |
 | [AI Integration](docs/AI-INTEGRATION.md) | Claude API patterns, prompt caching, cost tracking |
-| [Development](docs/DEVELOPMENT.md) | Local setup, coding standards, Git workflow |
-| [Testing](docs/TESTING.md) | Test strategy, running tests |
-| [Deployment](docs/DEPLOYMENT.md) | Docker deployment guide |
-| [Contributing](docs/CONTRIBUTING.md) | How to contribute |
+| [Development](docs/DEVELOPMENT.md)       | Local setup, coding standards, Git workflow        |
+| [Testing](docs/TESTING.md)               | Test strategy, running tests                       |
+| [Deployment](docs/DEPLOYMENT.md)         | Docker deployment guide                            |
+| [Contributing](docs/CONTRIBUTING.md)     | How to contribute                                  |
 
 ## Scripts
 
 ```bash
 npm run dev          # Start dev server with Turbopack
 npm run build        # Production build
+npm run format       # Format code with Prettier
+npm run format:check # Check formatting (used in CI)
 npm run lint         # Run ESLint
 npm run type-check   # TypeScript type checking
 npm run test         # Run Vitest tests

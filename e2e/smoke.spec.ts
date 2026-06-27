@@ -72,7 +72,10 @@ test.describe("Smoke Tests", () => {
     await page.goto("/login");
     await page.getByTestId("login-username").fill("admin");
     await page.getByTestId("login-password").fill("admin");
-    await page.getByTestId("credentials-login-form").getByRole("button", { name: "Sign in" }).click();
+    await page
+      .getByTestId("credentials-login-form")
+      .getByRole("button", { name: "Sign in" })
+      .click();
     await page.waitForURL("/");
 
     await page.goto("/admin");
@@ -85,7 +88,10 @@ test.describe("Smoke Tests", () => {
     await page.goto("/login");
     await page.getByTestId("login-username").fill("admin");
     await page.getByTestId("login-password").fill("admin");
-    await page.getByTestId("credentials-login-form").getByRole("button", { name: "Sign in" }).click();
+    await page
+      .getByTestId("credentials-login-form")
+      .getByRole("button", { name: "Sign in" })
+      .click();
     await page.waitForURL("/");
 
     await page.goto("/admin/articles");
@@ -108,13 +114,18 @@ test.describe("Smoke Tests", () => {
     await page.goto("/login");
     await page.getByTestId("login-username").fill("admin");
     await page.getByTestId("login-password").fill("admin");
-    await page.getByTestId("credentials-login-form").getByRole("button", { name: "Sign in" }).click();
+    await page
+      .getByTestId("credentials-login-form")
+      .getByRole("button", { name: "Sign in" })
+      .click();
     await page.waitForURL("/");
 
     await page.goto("/articles/new");
     await page.locator("#title").fill(SMOKE_ARTICLE_TITLE);
     await page.locator("#summary").fill("Created by Playwright smoke test");
-    await page.locator("#content").fill("# Smoke Test\n\nThis article was created by an automated E2E test.");
+    await page
+      .locator("#content")
+      .fill("# Smoke Test\n\nThis article was created by an automated E2E test.");
     await page.getByTestId("article-status-select").selectOption("published");
     await page.getByTestId("article-submit-button").click();
 
@@ -127,7 +138,10 @@ test.describe("Smoke Tests", () => {
     await page.goto("/login");
     await page.getByTestId("login-username").fill("admin");
     await page.getByTestId("login-password").fill("admin");
-    await page.getByTestId("credentials-login-form").getByRole("button", { name: "Sign in" }).click();
+    await page
+      .getByTestId("credentials-login-form")
+      .getByRole("button", { name: "Sign in" })
+      .click();
     await page.waitForURL("/");
 
     await page.goto("/profile/admin");
@@ -139,7 +153,10 @@ test.describe("Smoke Tests", () => {
     await page.goto("/login");
     await page.getByTestId("login-username").fill("admin");
     await page.getByTestId("login-password").fill("admin");
-    await page.getByTestId("credentials-login-form").getByRole("button", { name: "Sign in" }).click();
+    await page
+      .getByTestId("credentials-login-form")
+      .getByRole("button", { name: "Sign in" })
+      .click();
     await page.waitForURL("/");
 
     await page.goto("/profile/settings");
@@ -162,7 +179,10 @@ test.describe("Smoke Tests", () => {
     await page.goto("/login");
     await page.getByTestId("login-username").fill("admin");
     await page.getByTestId("login-password").fill("admin");
-    await page.getByTestId("credentials-login-form").getByRole("button", { name: "Sign in" }).click();
+    await page
+      .getByTestId("credentials-login-form")
+      .getByRole("button", { name: "Sign in" })
+      .click();
     await page.waitForURL("/");
 
     const cookies = await page.context().cookies();

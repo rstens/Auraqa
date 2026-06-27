@@ -32,6 +32,4 @@ function createDb(): Drizzled {
  * pinned on `globalThis` so HMR doesn't leak a new pool on each reload.
  */
 export const db: Drizzled =
-  process.env.NODE_ENV === "production"
-    ? createDb()
-    : (globalForDb.__auraqa_db ??= createDb());
+  process.env.NODE_ENV === "production" ? createDb() : (globalForDb.__auraqa_db ??= createDb());
