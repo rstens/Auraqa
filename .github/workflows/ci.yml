@@ -52,8 +52,28 @@ jobs:
       - name: Type check
         run: npm run type-check
 
-      - name: Unit tests
-        run: npm run test
+      - name: Unit tests (with coverage)
+        # `test:coverage` enforces the 90% gate in vitest.config.ts and
+        # writes lcov + json-summary + html to coverage/ for the upload
+        # step below.
+        run: npm run test:coverage
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
+          flags: unit
+          fail_ci_if_error: false
+
+      - name: Upload coverage HTML as artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-html
+          retention-days: 14
+          path: coverage/
+          if-no-files-found: ignore
 
   e2e:
     runs-on: ubuntu-latest
