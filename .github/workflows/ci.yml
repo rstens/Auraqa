@@ -99,15 +99,50 @@ jobs:
         run: npx playwright install chromium
 
       - name: Run E2E smoke tests
-        run: npx playwright test --reporter=list
+        # Reporters are configured in playwright.config.ts (list + html + github).
+        # No --reporter override here so the HTML report lands at
+        # playwright-report/ for the upload step below.
+        env:
+          CI: "true"
+        run: npx playwright test
 
-      - name: Upload test results
+      - name: Upload Playwright HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-html-report
+          # Retain for ~2 weeks — these are debugging aids, not deliverables.
+          retention-days: 14
+          path: playwright-report/
+          if-no-files-found: ignore
+
+      - name: Upload raw test results (traces, screenshots, videos)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-results
+          retention-days: 14
           path: test-results/
           if-no-files-found: ignore
+
+      - name: Write job summary
+        if: always()
+        run: |
+          {
+            echo "## Playwright E2E Report"
+            echo ""
+            if [ -f playwright-report/index.html ]; then
+              echo "HTML report uploaded as the **playwright-html-report** artifact (above)."
+              echo "Download and open \`index.html\` for traces, screenshots, and per-test details."
+            else
+              echo "_No HTML report was produced — Playwright may have failed before any test ran._"
+            fi
+            echo ""
+            if [ -d test-results ] && [ "$(ls -A test-results 2>/dev/null)" ]; then
+              failed=$(find test-results -mindepth 1 -maxdepth 1 -type d | wc -l)
+              echo "Captured artifacts for **$failed** failed test(s) under \`test-results/\`."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Stop Docker services
         if: always()
