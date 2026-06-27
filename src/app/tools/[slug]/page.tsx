@@ -13,6 +13,8 @@ import { timeAgo } from "@/lib/utils";
 import { auth } from "@/lib/auth";
 import { ReviewForm } from "@/components/tools/review-form";
 
+export const dynamic = "force-dynamic";
+
 export default async function ToolPage({
   params,
 }: {
@@ -46,12 +48,12 @@ export default async function ToolPage({
     .orderBy(desc(toolReviews.createdAt));
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
-      <Link href="/tools" className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400">
+    <div data-testid="tool-detail" className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+      <Link href="/tools" data-testid="back-to-tools" className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400">
         &larr; All tools
       </Link>
 
-      <div className="mt-4 rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+      <div data-testid="tool-info" className="mt-4 rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
           {tool.name}
         </h1>
@@ -91,10 +93,11 @@ export default async function ToolPage({
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
           Reviews ({reviews.length})
         </h2>
-        <div className="mt-4 space-y-4">
+        <div data-testid="reviews-list" className="mt-4 space-y-4">
           {reviews.map((review) => (
             <div
               key={review.id}
+              data-testid={`review-${review.id}`}
               className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800"
             >
               <div className="flex items-center justify-between">

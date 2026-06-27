@@ -17,6 +17,22 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
     ],
   },
+  async headers() {
+    return [
+      {
+        // Allow bfcache on all pages by replacing no-store with no-cache.
+        // Pages are still revalidated on navigation but can be restored
+        // instantly on back/forward without a full reload.
+        source: "/(.*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "private, no-cache, max-age=0, must-revalidate",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

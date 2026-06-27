@@ -299,6 +299,25 @@ export const votes = pgTable("votes", {
 ]);
 
 // ============================================================
+// Glossary
+// ============================================================
+
+export const glossaryTerms = pgTable("glossary_terms", {
+  id: uuid("id").primaryKey(),
+  term: text("term").unique().notNull(),
+  abbreviation: text("abbreviation"),
+  definition: text("definition").notNull(),
+  category: text("category").notNull(),
+  relatedTerms: jsonb("related_terms").default([]),
+  seeAlso: jsonb("see_also").default([]),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("idx_glossary_term").on(table.term),
+  index("idx_glossary_category").on(table.category),
+]);
+
+// ============================================================
 // AI Interactions (cost tracking and auditing)
 // ============================================================
 

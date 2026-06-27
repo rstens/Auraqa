@@ -1,39 +1,38 @@
 /**
  * Markdown rendering utilities for AuraQA.
  *
- * Pipeline: remark (parse + GFM) → remark-rehype (mdast → hast)
- *           → rehype-sanitize (strip dangerous HTML) → rehype-stringify (HTML)
+ * Converts Markdown content to HTML using remark/rehype pipeline
+ * with GitHub Flavored Markdown and syntax highlighting support.
  *
- * `rehype-sanitize` enforces an allow-list — script tags, event handlers,
- * `javascript:` URLs, and unknown attributes are stripped before output.
- * This is the load-bearing defense against stored XSS from user Markdown.
- *
- * @see docs/AI-INTEGRATION.md
+ * Output is safe for rendering — remark/rehype do not execute
+ * embedded scripts. Markdown is stored as-is in the database;
+ * HTML is generated server-side at render time.
  */
 
 import { unified } from "unified";
 import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
 import remarkRehype from "remark-rehype";
-import rehypeSanitize from "rehype-sanitize";
+import rehypeHighlight from "rehype-highlight";
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import rehypeStringify from "rehype-stringify";
 
-/**
- * Convert Markdown string to sanitized HTML.
- *
- * Uses rehype-sanitize with the default GitHub-flavored allow-list, which
- * strips <script>, event handlers (onerror, onclick, ...), and
- * javascript: / data: URLs that could execute code.
- *
- * @param markdown - Raw Markdown content
- * @returns HTML string safe to render via dangerouslySetInnerHTML
- */
+const sanitizeSchema = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    code: [...(defaultSchema.attributes?.code ?? []), "className"],
+    span: [...(defaultSchema.attributes?.span ?? []), "className"],
+  },
+};
+
 export async function renderMarkdown(markdown: string): Promise<string> {
   const result = await unified()
     .use(remarkParse)
     .use(remarkGfm)
-    .use(remarkRehype, { allowDangerousHtml: false })
-    .use(rehypeSanitize)
+    .use(remarkRehype)
+    .use(rehypeHighlight)
+    .use(rehypeSanitize, sanitizeSchema)
     .use(rehypeStringify)
     .process(markdown);
 

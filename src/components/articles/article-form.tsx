@@ -53,8 +53,10 @@ export function ArticleForm({
       });
 
       if (!res.ok) {
-        const body = await res.json();
-        throw new Error(body.error ?? "Failed to save article");
+        const text = await res.text();
+        let message = "Failed to save article";
+        try { message = JSON.parse(text).error ?? message; } catch {}
+        throw new Error(message);
       }
 
       const article = await res.json();
@@ -68,9 +70,9 @@ export function ArticleForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form data-testid="article-form" onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+        <div data-testid="article-form-error" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
           {error}
         </div>
       )}
@@ -121,6 +123,7 @@ export function ArticleForm({
 
       <div className="flex items-center gap-4">
         <select
+          data-testid="article-status-select"
           name="status"
           defaultValue={initialData?.status ?? "draft"}
           className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
@@ -130,6 +133,7 @@ export function ArticleForm({
         </select>
 
         <button
+          data-testid="article-submit-button"
           type="submit"
           disabled={loading}
           className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"

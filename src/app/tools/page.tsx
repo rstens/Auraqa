@@ -4,6 +4,7 @@
  * Displays approved testing tools with ratings and categories.
  */
 
+// Opt out of static prerendering so `next build` succeeds without a live DB.
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
@@ -20,7 +21,7 @@ export default async function ToolsPage() {
     .limit(50);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+    <div data-testid="tools-page" className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
@@ -32,15 +33,16 @@ export default async function ToolsPage() {
         </div>
         <Link
           href="/tools/submit"
+          data-testid="submit-tool-link"
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
         >
           Submit a Tool
         </Link>
       </div>
 
-      <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div data-testid="tools-grid" className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {toolList.length === 0 ? (
-          <p className="col-span-full py-12 text-center text-slate-500 dark:text-slate-400">
+          <p data-testid="tools-empty" className="col-span-full py-12 text-center text-slate-500 dark:text-slate-400">
             No tools yet. Submit the first one!
           </p>
         ) : (
@@ -70,6 +72,7 @@ function ToolCard({
   return (
     <Link
       href={`/tools/${tool.slug}`}
+      data-testid={`tool-card-${tool.slug}`}
       className="flex flex-col rounded-lg border border-slate-200 bg-white p-5 transition-all hover:border-slate-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600"
     >
       <h2 className="text-lg font-semibold text-slate-900 dark:text-white">

@@ -8,7 +8,7 @@ import Link from "next/link";
 
 export function Footer() {
   return (
-    <footer className="border-t border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900">
+    <footer data-testid="footer" className="border-t border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid gap-8 sm:grid-cols-3">
           <div>
@@ -26,6 +26,7 @@ export function Footer() {
               Resources
             </h3>
             <ul className="mt-3 space-y-2">
+              <FooterLink href="/glossary">ISTQB Glossary</FooterLink>
               <FooterLink href="/search">Search</FooterLink>
               <FooterLink href="/forum/test-automation">Test Automation</FooterLink>
               <FooterLink href="/forum/api-testing">API Testing</FooterLink>

@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       websiteUrl: websiteUrl ?? null,
       category: category ?? null,
       pricing: pricing ?? "unknown",
-      status: "approved",
+      status: "pending",
     })
     .returning();
 

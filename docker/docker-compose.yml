@@ -2,8 +2,9 @@
 # AuraQA Docker Compose — Full Stack
 #
 # Services:
-#   app  — Next.js application (port 3000)
-#   db   — PostgreSQL 18 database (port 5432)
+#   db      — PostgreSQL 18 database (port 5432)
+#   migrate — Runs schema migrations on startup, then exits
+#   app     — Next.js application (port 3000)
 #
 # Usage:
 #   Production:  docker compose -f docker/docker-compose.yml up -d
@@ -26,13 +27,26 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql
       - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U auraqa -d auraqa"]
       interval: 5s
       timeout: 5s
       retries: 5
+
+  migrate:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.dev
+    container_name: auraqa-migrate
+    environment:
+      DATABASE_URL: postgres://auraqa:auraqa_password@db:5432/auraqa
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "npx drizzle-kit push && npx tsx src/db/seed.ts"
+    restart: "no"
 
   app:
     build:
@@ -45,12 +59,15 @@ services:
     environment:
       DATABASE_URL: postgres://auraqa:auraqa_password@db:5432/auraqa
       NEXTAUTH_URL: http://localhost:3000
+      AUTH_TRUST_HOST: "true"
       NODE_ENV: production
     env_file:
       - ../.env.local
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
 volumes:
   pgdata:

@@ -9,7 +9,9 @@
 
 import { Pool } from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { forumCategories, tags } from "./schema";
+import { forumCategories, tags, glossaryTerms } from "./schema";
+import { GLOSSARY_TERMS } from "../lib/glossary-data";
+import { uuidv7 } from "uuidv7";
 
 async function seed() {
   const pool = new Pool({
@@ -62,6 +64,52 @@ async function seed() {
     { name: "AI in Testing", slug: "ai-in-testing" },
     { name: "Test Data", slug: "test-data" },
   ]).onConflictDoNothing();
+
+  console.log("Seeding glossary terms...");
+  // Pass 1: insert all terms with stable IDs based on slug
+  const slugToId = new Map<string, string>();
+  for (const term of GLOSSARY_TERMS) {
+    const id = uuidv7();
+    slugToId.set(term.id, id);
+    await db.insert(glossaryTerms).values({
+      id,
+      term: term.term,
+      abbreviation: term.abbreviation,
+      definition: term.definition,
+      category: term.category,
+      relatedTerms: [],
+      seeAlso: [],
+    }).onConflictDoNothing();
+  }
+
+  // Pass 2: resolve slug references to UUIDs and update
+  const { eq } = await import("drizzle-orm");
+  const existingTerms = await db.select({ id: glossaryTerms.id, term: glossaryTerms.term }).from(glossaryTerms);
+  const termNameToId = new Map<string, string>();
+  for (const row of existingTerms) {
+    termNameToId.set(row.term, row.id);
+  }
+  for (const term of GLOSSARY_TERMS) {
+    const dbId = termNameToId.get(term.term);
+    if (!dbId) continue;
+    const resolvedRelated = term.relatedTerms
+      .map((slug) => {
+        const rel = GLOSSARY_TERMS.find((t) => t.id === slug);
+        return rel ? termNameToId.get(rel.term) : undefined;
+      })
+      .filter((id): id is string => !!id);
+    const resolvedSeeAlso = term.seeAlso
+      .map((slug) => {
+        const rel = GLOSSARY_TERMS.find((t) => t.id === slug);
+        return rel ? termNameToId.get(rel.term) : undefined;
+      })
+      .filter((id): id is string => !!id);
+    if (resolvedRelated.length > 0 || resolvedSeeAlso.length > 0) {
+      await db.update(glossaryTerms)
+        .set({ relatedTerms: resolvedRelated, seeAlso: resolvedSeeAlso })
+        .where(eq(glossaryTerms.id, dbId));
+    }
+  }
 
   console.log("Seed complete!");
   await pool.end();

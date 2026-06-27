@@ -11,10 +11,8 @@ import { useRouter } from "next/navigation";
 
 export function ThreadForm({
   categoryId,
-  categorySlug,
 }: {
   categoryId: number;
-  categorySlug: string;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -39,8 +37,10 @@ export function ThreadForm({
       });
 
       if (!res.ok) {
-        const body = await res.json();
-        throw new Error(body.error ?? "Failed to create thread");
+        const text = await res.text();
+        let message = "Failed to create thread";
+        try { message = JSON.parse(text).error ?? message; } catch {}
+        throw new Error(message);
       }
 
       const thread = await res.json();
@@ -54,9 +54,9 @@ export function ThreadForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form data-testid="thread-form" onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+        <div data-testid="thread-form-error" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
           {error}
         </div>
       )}
@@ -95,6 +95,7 @@ export function ThreadForm({
         className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
       >
         {loading ? "Posting..." : "Post Thread"}
+
       </button>
     </form>
   );

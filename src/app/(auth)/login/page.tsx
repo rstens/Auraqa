@@ -1,10 +1,3 @@
-/**
- * Login page with OAuth provider buttons.
- *
- * Server Component that renders sign-in options for GitHub and Google.
- * Redirects authenticated users to the home page.
- */
-
 import { auth, signIn } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
@@ -25,6 +18,73 @@ export default async function LoginPage() {
         </div>
 
         <div className="space-y-3">
+          <form
+            data-testid="credentials-login-form"
+            action={async (formData: FormData) => {
+              "use server";
+              await signIn("credentials", {
+                username: formData.get("username"),
+                password: formData.get("password"),
+                redirectTo: "/",
+              });
+            }}
+          >
+            <div className="space-y-2">
+              <input
+                name="username"
+                data-testid="login-username"
+                type="text"
+                placeholder="Username"
+                required
+                className="block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+              />
+              <input
+                name="password"
+                data-testid="login-password"
+                type="password"
+                placeholder="Password"
+                required
+                className="block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+              />
+              <button
+                type="submit"
+                className="flex w-full items-center justify-center gap-3 rounded-lg bg-blue-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+              >
+                Sign in
+              </button>
+
+            </div>
+          </form>
+
+          {process.env.NODE_ENV !== "production" && (
+            <form
+              action={async () => {
+                "use server";
+                await signIn("credentials", {
+                  email: "dev@auraqa.local",
+                  name: "Dev User",
+                  redirectTo: "/",
+                });
+              }}
+            >
+              <button
+                type="submit"
+                className="flex w-full items-center justify-center gap-3 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
+              >
+                Dev Login (auto)
+              </button>
+            </form>
+          )}
+
+          <div data-testid="login-divider" className="relative py-2">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-300 dark:border-slate-600" />
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-white px-2 text-slate-500 dark:bg-slate-800 dark:text-slate-400">or</span>
+            </div>
+          </div>
+
           <form
             action={async () => {
               "use server";

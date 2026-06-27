@@ -7,7 +7,7 @@
 #
 # Adds:
 #   - Source code volume mount for hot reload
-#   - Adminer database admin UI (port 8080)
+#   - Auto-applies database schema and seeds on startup
 #   - Development environment variables
 ###############################################################################
 
@@ -20,13 +20,5 @@ services:
       - ../public:/app/public
     environment:
       NODE_ENV: development
-    command: npm run dev
-
-  adminer:
-    image: adminer
-    container_name: auraqa-adminer
-    restart: unless-stopped
-    ports:
-      - "8080:8080"
-    depends_on:
-      - db
+      AUTH_TRUST_HOST: "true"
+    command: sh -c "npx drizzle-kit push && npx tsx src/db/seed.ts && npm run dev"

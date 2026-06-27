@@ -14,6 +14,8 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { ReplyForm } from "@/components/forum/reply-form";
 
+export const dynamic = "force-dynamic";
+
 export default async function ThreadPage({
   params,
 }: {
@@ -75,7 +77,7 @@ export default async function ThreadPage({
   }));
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+    <div data-testid="thread-detail" className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
       <Link
         href={`/forum/${thread.categorySlug}`}
         className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400"
@@ -84,7 +86,7 @@ export default async function ThreadPage({
       </Link>
 
       {/* Thread */}
-      <div className="mt-4 rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+      <div data-testid="thread-content" className="mt-4 rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
           {thread.title}
         </h1>
@@ -105,10 +107,11 @@ export default async function ThreadPage({
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
           {replies.length} {replies.length === 1 ? "Reply" : "Replies"}
         </h2>
-        <div className="mt-4 space-y-4">
+        <div data-testid="replies-list" className="mt-4 space-y-4">
           {repliesWithHtml.map((reply) => (
             <div
               key={reply.id}
+              data-testid={`reply-${reply.id}`}
               className={`rounded-lg border p-4 ${
                 reply.isAccepted
                   ? "border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-900/20"

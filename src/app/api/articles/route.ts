@@ -47,8 +47,18 @@ export async function POST(request: NextRequest) {
   }
 
   const { title, content, summary, status } = parsed.data;
-  const slug = slugify(title) || generateId().slice(0, 8);
+  const baseSlug = slugify(title) || generateId().slice(0, 8);
   const id = generateId();
+
+  let slug = baseSlug;
+  const existing = await db
+    .select({ id: articles.id })
+    .from(articles)
+    .where(eq(articles.slug, baseSlug))
+    .limit(1);
+  if (existing.length > 0) {
+    slug = `${baseSlug}-${id.slice(0, 8)}`;
+  }
 
   const [article] = await db
     .insert(articles)

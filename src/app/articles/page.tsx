@@ -5,13 +5,15 @@
  * with pagination. Links to article detail pages.
  */
 
+// Opt out of static prerendering so `next build` succeeds without a live DB.
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { db } from "@/db";
-import { articles, users } from "@/db/schema";
+import { articles, users, articleTags, tags } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { timeAgo } from "@/lib/utils";
+import { renderMarkdown } from "@/lib/markdown";
 
 export default async function ArticlesPage() {
   const articleList = await db
@@ -36,8 +38,20 @@ export default async function ArticlesPage() {
     .orderBy(desc(articles.publishedAt))
     .limit(20);
 
+  const allArticleTags = await db
+    .select({ articleId: articleTags.articleId, tagName: tags.name })
+    .from(articleTags)
+    .innerJoin(tags, eq(articleTags.tagId, tags.id));
+
+  const tagsByArticle = new Map<string, string[]>();
+  for (const row of allArticleTags) {
+    const list = tagsByArticle.get(row.articleId) ?? [];
+    list.push(row.tagName);
+    tagsByArticle.set(row.articleId, list);
+  }
+
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+    <div data-testid="articles-page" className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
@@ -49,20 +63,21 @@ export default async function ArticlesPage() {
         </div>
         <Link
           href="/articles/new"
+          data-testid="write-article-link"
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
         >
           Write Article
         </Link>
       </div>
 
-      <div className="mt-8 space-y-4">
+      <div data-testid="articles-list" className="mt-8 space-y-4">
         {articleList.length === 0 ? (
-          <p className="py-12 text-center text-slate-500 dark:text-slate-400">
+          <p data-testid="articles-empty" className="py-12 text-center text-slate-500 dark:text-slate-400">
             No articles yet. Be the first to write one!
           </p>
         ) : (
           articleList.map((article) => (
-            <ArticleCard key={article.id} article={article} />
+            <ArticleCard key={article.id} article={article} tags={tagsByArticle.get(article.id) ?? []} />
           ))
         )}
       </div>
@@ -70,8 +85,9 @@ export default async function ArticlesPage() {
   );
 }
 
-function ArticleCard({
+async function ArticleCard({
   article,
+  tags: articleTagNames,
 }: {
   article: {
     id: string;
@@ -86,21 +102,34 @@ function ArticleCard({
     authorName: string | null;
     authorUsername: string | null;
   };
+  tags: string[];
 }) {
   const displaySummary = article.aiSummary ?? article.summary;
+  const summaryHtml = displaySummary ? await renderMarkdown(displaySummary) : null;
 
   return (
     <Link
       href={`/articles/${article.slug}`}
+      data-testid={`article-card-${article.slug}`}
       className="block rounded-lg border border-slate-200 bg-white p-6 transition-all hover:border-slate-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600"
     >
       <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
         {article.title}
       </h2>
-      {displaySummary && (
-        <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-          {displaySummary}
-        </p>
+      {summaryHtml && (
+        <div
+          className="prose prose-sm prose-slate mt-2 max-w-none dark:prose-invert"
+          dangerouslySetInnerHTML={{ __html: summaryHtml }}
+        />
+      )}
+      {articleTagNames.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {articleTagNames.map((tag) => (
+            <span key={tag} className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+              {tag}
+            </span>
+          ))}
+        </div>
       )}
       <div className="mt-4 flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
         <span>by {article.authorName ?? article.authorUsername ?? "Anonymous"}</span>

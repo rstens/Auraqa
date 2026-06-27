@@ -46,6 +46,26 @@ export const createToolSchema = z.object({
   tags: z.array(z.string()).max(10).optional(),
 });
 
+/** Schema for admin updating a tool. */
+export const updateToolSchema = createToolSchema.partial().extend({
+  status: z.enum(["pending", "approved", "rejected"]).optional(),
+});
+
+/** Schema for changing a user's role. */
+export const updateUserRoleSchema = z.object({
+  role: z.enum(["user", "admin"]),
+});
+
+/** Schema for admin AI action on an article. */
+export const adminAiActionSchema = z.object({
+  action: z.enum(["summarize", "suggest-tags"]),
+});
+
+/** Schema for admin AI suggest-answer. */
+export const adminSuggestAnswerSchema = z.object({
+  threadId: z.string().uuid(),
+});
+
 /** Schema for creating a tool review. */
 export const createReviewSchema = z.object({
   rating: z.number().int().min(1).max(5),
@@ -60,10 +80,27 @@ export const castVoteSchema = z.object({
   value: z.union([z.literal(1), z.literal(-1)]),
 });
 
+/** Schema for updating own profile. */
+export const updateProfileSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  username: z.string().min(1).max(50).optional(),
+  bio: z.string().max(500).optional(),
+});
+
+/** Schema for creating/updating a glossary term. */
+export const glossaryTermSchema = z.object({
+  term: z.string().min(1).max(200),
+  abbreviation: z.string().max(20).nullable().optional(),
+  definition: z.string().min(1).max(5000),
+  category: z.string().min(1).max(50),
+  relatedTerms: z.array(z.string()).optional(),
+  seeAlso: z.array(z.string()).optional(),
+});
+
 /** Schema for search queries. */
 export const searchQuerySchema = z.object({
   q: z.string().min(1).max(200),
-  type: z.enum(["all", "articles", "threads", "tools"]).default("all"),
+  type: z.enum(["all", "articles", "threads", "tools", "glossary"]).default("all"),
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });

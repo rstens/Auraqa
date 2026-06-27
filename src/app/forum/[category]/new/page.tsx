@@ -11,6 +11,8 @@ import { forumCategories } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { ThreadForm } from "@/components/forum/thread-form";
 
+export const dynamic = "force-dynamic";
+
 export default async function NewThreadPage({
   params,
 }: {
@@ -35,7 +37,7 @@ export default async function NewThreadPage({
         New Thread in {cat.name}
       </h1>
       <div className="mt-8">
-        <ThreadForm categoryId={cat.id} categorySlug={categorySlug} />
+        <ThreadForm categoryId={cat.id} />
       </div>
     </div>
   );

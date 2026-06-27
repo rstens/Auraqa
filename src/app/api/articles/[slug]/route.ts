@@ -10,7 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { articles } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { auth } from "@/lib/auth";
+import { auth, isAdmin } from "@/lib/auth";
 import { updateArticleSchema } from "@/lib/validators";
 
 export async function GET(
@@ -52,7 +52,7 @@ export async function PUT(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  if (existing[0].authorId !== session.user.id) {
+  if (existing[0].authorId !== session.user.id && !(await isAdmin())) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -99,7 +99,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  if (existing[0].authorId !== session.user.id) {
+  if (existing[0].authorId !== session.user.id && !(await isAdmin())) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
