@@ -107,7 +107,7 @@ jobs:
           "
 
       - name: OSV-Scanner — open-source vulnerability DB
-        uses: google/osv-scanner-action/osv-scanner-action@v2.0.2
+        uses: google/osv-scanner-action@v2.3.8
         continue-on-error: true
         with:
           scan-args: |-
@@ -126,7 +126,7 @@ jobs:
           category: osv-scanner
 
       - name: Trivy — filesystem scan (deps + misconfigs)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@master
         continue-on-error: true
         with:
           scan-type: fs
@@ -177,7 +177,7 @@ jobs:
 
       - name: Trivy — Docker image scan
         if: inputs.intensity != 'smoke'
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@master
         continue-on-error: true
         with:
           image-ref: auraqa:scan
