@@ -62,7 +62,17 @@ export default async function ThreadPage({
     .where(eq(forumReplies.threadId, id))
     .orderBy(asc(forumReplies.createdAt));
 
-  const threadHtml = await renderMarkdown(thread.content);
+  // Render Markdown for the thread and all replies in parallel BEFORE the JSX.
+  // Doing this inside replies.map(async ...) would return Promises (not JSX)
+  // and serialize the I/O — both rendering bugs and a perf hit.
+  const [threadHtml, replyHtmls] = await Promise.all([
+    renderMarkdown(thread.content),
+    Promise.all(replies.map((r) => renderMarkdown(r.content))),
+  ]);
+  const repliesWithHtml = replies.map((reply, i) => ({
+    ...reply,
+    contentHtml: replyHtmls[i],
+  }));
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
@@ -96,34 +106,31 @@ export default async function ThreadPage({
           {replies.length} {replies.length === 1 ? "Reply" : "Replies"}
         </h2>
         <div className="mt-4 space-y-4">
-          {replies.map(async (reply) => {
-            const replyHtml = await renderMarkdown(reply.content);
-            return (
+          {repliesWithHtml.map((reply) => (
+            <div
+              key={reply.id}
+              className={`rounded-lg border p-4 ${
+                reply.isAccepted
+                  ? "border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-900/20"
+                  : "border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800"
+              }`}
+            >
+              {reply.isAccepted && (
+                <span className="mb-2 inline-block rounded bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-800 dark:text-green-200">
+                  Accepted Answer
+                </span>
+              )}
               <div
-                key={reply.id}
-                className={`rounded-lg border p-4 ${
-                  reply.isAccepted
-                    ? "border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-900/20"
-                    : "border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800"
-                }`}
-              >
-                {reply.isAccepted && (
-                  <span className="mb-2 inline-block rounded bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-800 dark:text-green-200">
-                    Accepted Answer
-                  </span>
-                )}
-                <div
-                  className="prose prose-slate prose-sm max-w-none dark:prose-invert"
-                  dangerouslySetInnerHTML={{ __html: replyHtml }}
-                />
-                <div className="mt-3 flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
-                  <span>{reply.authorName ?? reply.authorUsername ?? "Anonymous"}</span>
-                  <span>{timeAgo(reply.createdAt)}</span>
-                  <span>{reply.voteScore} votes</span>
-                </div>
+                className="prose prose-slate prose-sm max-w-none dark:prose-invert"
+                dangerouslySetInnerHTML={{ __html: reply.contentHtml }}
+              />
+              <div className="mt-3 flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                <span>{reply.authorName ?? reply.authorUsername ?? "Anonymous"}</span>
+                <span>{timeAgo(reply.createdAt)}</span>
+                <span>{reply.voteScore} votes</span>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </div>
 

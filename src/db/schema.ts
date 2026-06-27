@@ -12,6 +12,7 @@
  * @see docs/DATABASE.md for design decisions
  */
 
+import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import {
   pgTable,
   text,
@@ -120,7 +121,7 @@ export const tags = pgTable("tags", {
  */
 export const articles = pgTable("articles", {
   id: uuid("id").primaryKey(),
-  authorId: uuid("author_id").notNull().references(() => users.id, { onDelete: "set null" }),
+  authorId: uuid("author_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   slug: text("slug").unique().notNull(),
   summary: text("summary").default(""),
@@ -170,7 +171,7 @@ export const forumCategories = pgTable("forum_categories", {
 export const forumThreads = pgTable("forum_threads", {
   id: uuid("id").primaryKey(),
   categoryId: integer("category_id").notNull().references(() => forumCategories.id, { onDelete: "cascade" }),
-  authorId: uuid("author_id").notNull().references(() => users.id, { onDelete: "set null" }),
+  authorId: uuid("author_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   content: text("content").notNull(),
   isPinned: boolean("is_pinned").notNull().default(false),
@@ -202,8 +203,12 @@ export const forumThreadTags = pgTable("forum_thread_tags", {
 export const forumReplies = pgTable("forum_replies", {
   id: uuid("id").primaryKey(),
   threadId: uuid("thread_id").notNull().references(() => forumThreads.id, { onDelete: "cascade" }),
-  authorId: uuid("author_id").notNull().references(() => users.id, { onDelete: "set null" }),
-  parentId: uuid("parent_id"),
+  authorId: uuid("author_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  // Self-reference: a reply's parent is another reply in the same thread.
+  // AnyPgColumn cast breaks the circular forward-reference at type level.
+  parentId: uuid("parent_id").references((): AnyPgColumn => forumReplies.id, {
+    onDelete: "set null",
+  }),
   content: text("content").notNull(),
   isAccepted: boolean("is_accepted").notNull().default(false),
   voteScore: integer("vote_score").notNull().default(0),
@@ -224,7 +229,7 @@ export const forumReplies = pgTable("forum_replies", {
  */
 export const tools = pgTable("tools", {
   id: uuid("id").primaryKey(),
-  submittedBy: uuid("submitted_by").notNull().references(() => users.id, { onDelete: "set null" }),
+  submittedBy: uuid("submitted_by").notNull().references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   slug: text("slug").unique().notNull(),
   description: text("description").notNull(),
@@ -261,7 +266,7 @@ export const toolTags = pgTable("tool_tags", {
 export const toolReviews = pgTable("tool_reviews", {
   id: uuid("id").primaryKey(),
   toolId: uuid("tool_id").notNull().references(() => tools.id, { onDelete: "cascade" }),
-  authorId: uuid("author_id").notNull().references(() => users.id, { onDelete: "set null" }),
+  authorId: uuid("author_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   rating: smallint("rating").notNull(),
   title: text("title"),
   content: text("content").notNull(),
