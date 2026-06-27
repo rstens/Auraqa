@@ -79,6 +79,15 @@ jobs:
           # GitLeaks needs full history to scan commits.
           fetch-depth: 0
 
+      - name: Capture scan target metadata
+        id: scan-target
+        run: |
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          case "$TARGET_BRANCH" in
+            refs/*) echo "ref=$TARGET_BRANCH" >> "$GITHUB_OUTPUT" ;;
+            *) echo "ref=refs/heads/$TARGET_BRANCH" >> "$GITHUB_OUTPUT" ;;
+          esac
+
       - uses: actions/setup-node@v4
         with:
           node-version: "22.x"
@@ -114,6 +123,8 @@ jobs:
         with:
           sarif_file: results.sarif
           category: gitleaks
+          ref: ${{ steps.scan-target.outputs.ref }}
+          sha: ${{ steps.scan-target.outputs.sha }}
 
       - name: npm audit — registry advisories
         # Don't fail the job on findings — captured to the artifact and summary.
