@@ -69,35 +69,44 @@ export async function POST(
 
   const id = generateId();
   const toolId = toolResult[0].id;
+  // Extract before the closure so TypeScript's narrowing from the early
+  // `if (!session?.user?.id)` return reaches the transaction callback.
+  const authorId = session.user.id;
 
-  const [review] = await db
-    .insert(toolReviews)
-    .values({
-      id,
-      toolId,
-      authorId: session.user.id,
-      rating: parsed.data.rating,
-      title: parsed.data.title ?? null,
-      content: parsed.data.content,
-    })
-    .returning();
+  // Wrap insert + aggregate + tools update in a single transaction. Without
+  // this, two concurrent POSTs see the same intermediate avg/count and the
+  // second writer clobbers the first → reviewCount drifts below reality.
+  const review = await db.transaction(async (tx) => {
+    const [inserted] = await tx
+      .insert(toolReviews)
+      .values({
+        id,
+        toolId,
+        authorId,
+        rating: parsed.data.rating,
+        title: parsed.data.title ?? null,
+        content: parsed.data.content,
+      })
+      .returning();
 
-  // Recalculate average rating and count
-  const [stats] = await db
-    .select({
-      avgRating: avg(toolReviews.rating),
-      count: sql<number>`count(*)`,
-    })
-    .from(toolReviews)
-    .where(eq(toolReviews.toolId, toolId));
+    const [stats] = await tx
+      .select({
+        avgRating: avg(toolReviews.rating),
+        count: sql<number>`count(*)`,
+      })
+      .from(toolReviews)
+      .where(eq(toolReviews.toolId, toolId));
 
-  await db
-    .update(tools)
-    .set({
-      avgRating: stats.avgRating ?? "0",
-      reviewCount: Number(stats.count),
-    })
-    .where(eq(tools.id, toolId));
+    await tx
+      .update(tools)
+      .set({
+        avgRating: stats.avgRating ?? "0",
+        reviewCount: Number(stats.count),
+      })
+      .where(eq(tools.id, toolId));
+
+    return inserted;
+  });
 
   return NextResponse.json(review, { status: 201 });
 }

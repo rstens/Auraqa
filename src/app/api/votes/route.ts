@@ -3,6 +3,10 @@
  *
  * POST /api/votes — Cast a vote (+1 or -1) on an article, thread, or reply.
  *                   Toggles off if the same vote exists. Flips if opposite vote exists.
+ *
+ * The vote write and target score update are wrapped in a single transaction
+ * so concurrent toggles can't drift `vote_score` away from the actual sum of
+ * `votes.value`.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -18,6 +22,7 @@ export async function POST(request: NextRequest) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const userId = session.user.id;
 
   const body = await request.json();
   const parsed = castVoteSchema.safeParse(body);
@@ -29,67 +34,65 @@ export async function POST(request: NextRequest) {
   }
 
   const { targetType, targetId, value } = parsed.data;
-  const userId = session.user.id;
 
-  const existing = await db
-    .select()
-    .from(votes)
-    .where(
-      and(
-        eq(votes.userId, userId),
-        eq(votes.targetType, targetType),
-        eq(votes.targetId, targetId)
+  const scoreDelta = await db.transaction(async (tx) => {
+    // Single SELECT to find any prior vote by this user on this target.
+    const existing = await tx
+      .select({ id: votes.id, value: votes.value })
+      .from(votes)
+      .where(
+        and(
+          eq(votes.userId, userId),
+          eq(votes.targetType, targetType),
+          eq(votes.targetId, targetId)
+        )
       )
-    )
-    .limit(1);
+      .limit(1);
 
-  let scoreDelta = 0;
-
-  if (existing.length > 0) {
-    const existingVote = existing[0];
-    if (existingVote.value === value) {
-      // Same vote — remove it (toggle off)
-      await db.delete(votes).where(eq(votes.id, existingVote.id));
-      scoreDelta = -value;
+    let delta = 0;
+    if (existing.length > 0) {
+      const prior = existing[0];
+      if (prior.value === value) {
+        // Same vote — remove (toggle off).
+        await tx.delete(votes).where(eq(votes.id, prior.id));
+        delta = -value;
+      } else {
+        // Opposite vote — flip.
+        await tx.update(votes).set({ value }).where(eq(votes.id, prior.id));
+        delta = value * 2;
+      }
     } else {
-      // Opposite vote — flip it
-      await db
-        .update(votes)
-        .set({ value: value as number })
-        .where(eq(votes.id, existingVote.id));
-      scoreDelta = value * 2;
+      await tx.insert(votes).values({
+        id: generateId(),
+        userId,
+        targetType,
+        targetId,
+        value,
+      });
+      delta = value;
     }
-  } else {
-    // New vote
-    await db.insert(votes).values({
-      id: generateId(),
-      userId,
-      targetType,
-      targetId,
-      value: value as number,
-    });
-    scoreDelta = value;
-  }
 
-  // Update the target's vote score
-  if (scoreDelta !== 0) {
-    if (targetType === "article") {
-      await db
-        .update(articles)
-        .set({ voteScore: sql`${articles.voteScore} + ${scoreDelta}` })
-        .where(eq(articles.id, targetId));
-    } else if (targetType === "thread") {
-      await db
-        .update(forumThreads)
-        .set({ voteScore: sql`${forumThreads.voteScore} + ${scoreDelta}` })
-        .where(eq(forumThreads.id, targetId));
-    } else if (targetType === "reply") {
-      await db
-        .update(forumReplies)
-        .set({ voteScore: sql`${forumReplies.voteScore} + ${scoreDelta}` })
-        .where(eq(forumReplies.id, targetId));
+    if (delta !== 0) {
+      if (targetType === "article") {
+        await tx
+          .update(articles)
+          .set({ voteScore: sql`${articles.voteScore} + ${delta}` })
+          .where(eq(articles.id, targetId));
+      } else if (targetType === "thread") {
+        await tx
+          .update(forumThreads)
+          .set({ voteScore: sql`${forumThreads.voteScore} + ${delta}` })
+          .where(eq(forumThreads.id, targetId));
+      } else if (targetType === "reply") {
+        await tx
+          .update(forumReplies)
+          .set({ voteScore: sql`${forumReplies.voteScore} + ${delta}` })
+          .where(eq(forumReplies.id, targetId));
+      }
     }
-  }
+
+    return delta;
+  });
 
   return NextResponse.json({ success: true, scoreDelta });
 }

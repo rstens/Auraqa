@@ -4,6 +4,8 @@
  * Lists all forum categories with descriptions and thread counts.
  */
 
+// This route queries the DB at request time; opt out of static prerendering
+// so `next build` succeeds without a live database connection.
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";

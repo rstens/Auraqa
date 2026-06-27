@@ -44,6 +44,8 @@ export async function POST(request: NextRequest) {
   const slug = slugify(name) || generateId().slice(0, 8);
   const id = generateId();
 
+  // Submissions enter the moderation queue (status "pending"). A moderator
+  // approves via a separate workflow before the tool appears in /tools listings.
   const [tool] = await db
     .insert(tools)
     .values({
@@ -55,7 +57,7 @@ export async function POST(request: NextRequest) {
       websiteUrl: websiteUrl ?? null,
       category: category ?? null,
       pricing: pricing ?? "unknown",
-      status: "approved",
+      // status defaults to "pending" via the schema — moderator must approve
     })
     .returning();
 

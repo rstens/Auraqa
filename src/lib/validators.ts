@@ -60,6 +60,17 @@ export const castVoteSchema = z.object({
   value: z.union([z.literal(1), z.literal(-1)]),
 });
 
+/** Schema for updating the signed-in user's profile. */
+export const updateProfileSchema = z.object({
+  name: z.string().max(100).optional().default(""),
+  username: z
+    .string()
+    .min(2)
+    .max(40)
+    .regex(/^[a-zA-Z0-9_-]+$/, "Letters, numbers, underscores, hyphens only"),
+  bio: z.string().max(500).optional().default(""),
+});
+
 /** Schema for search queries. */
 export const searchQuerySchema = z.object({
   q: z.string().min(1).max(200),

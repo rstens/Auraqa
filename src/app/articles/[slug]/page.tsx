@@ -7,11 +7,13 @@
 
 import { db } from "@/db";
 import { articles, users } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { renderMarkdown } from "@/lib/markdown";
 import Link from "next/link";
 import { timeAgo } from "@/lib/utils";
+import { auth } from "@/lib/auth";
+import { VoteButtons } from "@/components/shared/vote-buttons";
 
 export default async function ArticlePage({
   params,
@@ -19,6 +21,7 @@ export default async function ArticlePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  const session = await auth();
 
   const result = await db
     .select({
@@ -46,6 +49,14 @@ export default async function ArticlePage({
   const article = result[0];
   if (!article || article.status !== "published") notFound();
 
+  // Fire-and-forget view count bump — don't block render on it. Atomic
+  // `view_count + 1` in SQL avoids races between concurrent views.
+  void db
+    .update(articles)
+    .set({ viewCount: sql`${articles.viewCount} + 1` })
+    .where(eq(articles.id, article.id))
+    .catch((err) => console.error("Failed to increment article view count:", err));
+
   const contentHtml = await renderMarkdown(article.content);
 
   return (
@@ -57,17 +68,25 @@ export default async function ArticlePage({
         &larr; Back to articles
       </Link>
 
-      <article className="mt-6">
-        <h1 className="text-3xl font-bold leading-tight text-slate-900 dark:text-white sm:text-4xl">
-          {article.title}
-        </h1>
-
-        <div className="mt-4 flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
-          <span>by {article.authorName ?? article.authorUsername ?? "Anonymous"}</span>
-          <span>{timeAgo(article.publishedAt ?? article.createdAt)}</span>
-          <span>{article.voteScore} votes</span>
-          <span>{article.viewCount} views</span>
+      <article className="mt-6 flex gap-6">
+        <div className="hidden sm:block">
+          <VoteButtons
+            targetType="article"
+            targetId={article.id}
+            initialScore={article.voteScore}
+            canVote={!!session?.user}
+          />
         </div>
+        <div className="flex-1">
+          <h1 className="text-3xl font-bold leading-tight text-slate-900 dark:text-white sm:text-4xl">
+            {article.title}
+          </h1>
+
+          <div className="mt-4 flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
+            <span>by {article.authorName ?? article.authorUsername ?? "Anonymous"}</span>
+            <span>{timeAgo(article.publishedAt ?? article.createdAt)}</span>
+            <span>{article.viewCount} views</span>
+          </div>
 
         {article.aiSummary && (
           <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
@@ -80,10 +99,11 @@ export default async function ArticlePage({
           </div>
         )}
 
-        <div
-          className="prose prose-slate mt-8 max-w-none dark:prose-invert"
-          dangerouslySetInnerHTML={{ __html: contentHtml }}
-        />
+          <div
+            className="prose prose-slate mt-8 max-w-none dark:prose-invert"
+            dangerouslySetInnerHTML={{ __html: contentHtml }}
+          />
+        </div>
       </article>
     </div>
   );

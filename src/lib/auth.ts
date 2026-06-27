@@ -42,6 +42,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     session({ session, user }) {
       if (session.user) {
         session.user.id = user.id;
+        // The DrizzleAdapter loads the full user row into `user` — expose
+        // `username` on the session so client components (UserMenu) can
+        // link to /profile/[username] without an extra round-trip.
+        (session.user as typeof session.user & { username?: string | null }).username =
+          (user as { username?: string | null }).username ?? null;
       }
       return session;
     },
