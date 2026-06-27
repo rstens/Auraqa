@@ -57,7 +57,3 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          # GITHUB_TOKEN is what lets the scan post a PR decoration with
-          # the analysis verdict. Without it the scan still runs; the PR
-          # just won't show inline annotations.
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
