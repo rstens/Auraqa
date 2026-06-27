@@ -1,0 +1,66 @@
+###############################################################################
+# AuraQA SonarQube Cloud Scan
+#
+# Runs on every push and PR against `dev` / `main`. Generates vitest LCOV
+# coverage first, then hands the workspace to SonarSource's official scan
+# action — Sonar reads `sonar-project.properties` at the repo root for
+# project key, sources/tests split, and the LCOV path.
+#
+# Requires a `SONAR_TOKEN` repo secret (Sonar dashboard → My Account →
+# Security → Generate token, scoped to the rstens_Auraqa project).
+###############################################################################
+
+name: SonarQube Cloud
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  # Sonar needs read on contents (checkout) and pull-requests (to attach
+  # the analysis decoration to the PR). No write scopes anywhere.
+  contents: read
+  pull-requests: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  sonarcloud:
+    name: SonarQube Cloud Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Full history is required for accurate blame info, which Sonar
+          # uses to credit findings to the right author + scope "new code"
+          # analysis on PRs.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22.x"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run tests with coverage
+        # `test:coverage` writes coverage/lcov.info — the path
+        # sonar-project.properties points at via
+        # sonar.javascript.lcov.reportPaths.
+        run: npm run test:coverage
+
+      - name: SonarQube Cloud Scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          # GITHUB_TOKEN is what lets the scan post a PR decoration with
+          # the analysis verdict. Without it the scan still runs; the PR
+          # just won't show inline annotations.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
