@@ -131,3 +131,7 @@ npm run db:studio    # Open Drizzle Studio
 ## License
 
 [Apache License 2.0](LICENSE)
+
+---
+
+[![SonarQube Cloud](https://sonarcloud.io/images/project_badges/sonarcloud-light.svg)](https://sonarcloud.io/summary/new_code?id=rstens_Auraqa)
