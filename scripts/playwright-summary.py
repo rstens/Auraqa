@@ -54,9 +54,17 @@ def walk_suites(suites, file_path: str = ""):
                 if not results:
                     yield sub_file, project, title, "unknown", 0
                     continue
-                final = results[-1]
+                final = results[-1] if isinstance(results[-1], dict) else {}
                 status = final.get("status", "unknown")
-                duration = int(final.get("duration", 0))
+                # Coerce duration defensively — the JSON has been observed with
+                # null, missing, and stringly-typed values across Playwright
+                # versions. This script runs in if: always(), so a crash here
+                # would mark an otherwise-green CI run as failed.
+                raw = final.get("duration", 0)
+                try:
+                    duration = int(raw) if raw is not None else 0
+                except (TypeError, ValueError):
+                    duration = 0
                 yield sub_file, project, title, status, duration
         # Nested suites (describe blocks).
         yield from walk_suites(suite.get("suites", []) or [], sub_file)
@@ -133,7 +141,18 @@ def main(argv: list[str]) -> int:
         )
         return 0
 
-    sys.stdout.write(render(data))
+    # Belt-and-suspenders: any unforeseen JSON shape that slips past the
+    # per-field defensive coercions inside walk_suites() should still emit
+    # a section rather than crash the CI summary step (it runs in
+    # if: always()). Return 0 so a green test run stays green.
+    try:
+        sys.stdout.write(render(data))
+    except Exception as e:  # noqa: BLE001 — intentional broad catch for CI safety
+        sys.stdout.write("## Playwright E2E — Per-test summary\n\n")
+        sys.stdout.write(
+            f"_Failed to render summary from `{path}`: {type(e).__name__}: {e}. "
+            "The raw JSON is uploaded as part of the playwright-html-report artifact._\n"
+        )
     return 0
 
 
