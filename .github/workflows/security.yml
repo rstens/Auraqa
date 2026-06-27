@@ -1,0 +1,467 @@
+###############################################################################
+# AuraQA Security Scan Workflow
+#
+# Manually-dispatched security pipeline. Combines static (no app needed) and
+# dynamic (DAST against a running instance) tooling, gated by a single
+# `intensity` input.
+#
+# ⚠️  EXTREME intensity runs DESTRUCTIVE active scans (ZAP full scan, SQLMap)
+#     that send real attack payloads — SQLi, XSS, path traversal, command
+#     injection. They WILL corrupt test data and may break the running app.
+#     NEVER point this at production. Only run against the ephemeral Docker
+#     instance this workflow stands up.
+#
+# Intensity matrix:
+#
+#   smoke   (~5 min)   — passive only, safe for any branch
+#                        GitLeaks · npm audit · OSV-Scanner · Trivy FS
+#                        ZAP baseline (passive)
+#
+#   normal  (~25 min)  — adds SAST + image scan + targeted DAST
+#                        + Semgrep · Trivy image · Nuclei (high/critical)
+#
+#   extreme (~90 min)  — adds breach-attempt scans
+#                        + ZAP full active scan · Nuclei (all severities)
+#                        + Wapiti · SQLMap against auth/API surfaces
+###############################################################################
+
+name: Security Scan
+
+on:
+  workflow_dispatch:
+    inputs:
+      intensity:
+        description: "Scan intensity — extreme is destructive, only on ephemeral environments"
+        type: choice
+        required: true
+        default: "normal"
+        options:
+          - smoke
+          - normal
+          - extreme
+      target_branch:
+        description: "Branch to scan (default: dev)"
+        type: string
+        required: false
+        default: "dev"
+
+permissions:
+  # Required so OSV-Scanner / Trivy / Semgrep can upload SARIF to the
+  # Security tab. The rest of the steps don't need any write scopes.
+  contents: read
+  security-events: write
+  actions: read
+
+env:
+  INTENSITY: ${{ inputs.intensity }}
+  TARGET_BRANCH: ${{ inputs.target_branch }}
+  APP_URL: http://localhost:3000
+
+jobs:
+  # =========================================================================
+  # Job 1 — Static analysis (no running app required)
+  # =========================================================================
+  static-analysis:
+    name: Static analysis (${{ inputs.intensity }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout target branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.target_branch }}
+          # GitLeaks needs full history to scan commits.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      # -- Always-on (every intensity) ---------------------------------------
+
+      - name: GitLeaks — secrets in git history
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GitLeaks license env var; the action runs in free mode without it
+          # but emits a warning. Set GITLEAKS_LICENSE in repo secrets to silence.
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+      - name: npm audit — registry advisories
+        # Don't fail the job on findings — captured to the artifact and summary.
+        # The job summary step below grades the report.
+        continue-on-error: true
+        run: |
+          npm audit --json > npm-audit.json || true
+          cat npm-audit.json | python3 -c "
+          import json, sys
+          d = json.load(sys.stdin)
+          meta = d.get('metadata', {}).get('vulnerabilities', {})
+          for sev in ('critical', 'high', 'moderate', 'low', 'info'):
+            print(f'  {sev}: {meta.get(sev, 0)}')
+          "
+
+      - name: OSV-Scanner — open-source vulnerability DB
+        uses: google/osv-scanner-action/osv-scanner-action@v2.0.2
+        continue-on-error: true
+        with:
+          scan-args: |-
+            --recursive
+            --skip-git
+            --format=sarif
+            --output=osv-scanner.sarif
+            ./
+
+      - name: Upload OSV-Scanner SARIF to Security tab
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        continue-on-error: true
+        with:
+          sarif_file: osv-scanner.sarif
+          category: osv-scanner
+
+      - name: Trivy — filesystem scan (deps + misconfigs)
+        uses: aquasecurity/trivy-action@0.28.0
+        continue-on-error: true
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: sarif
+          output: trivy-fs.sarif
+          severity: ${{ inputs.intensity == 'extreme' && 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL' || 'MEDIUM,HIGH,CRITICAL' }}
+          # Don't fail on findings — surfaced in summary + SARIF.
+          exit-code: "0"
+
+      - name: Upload Trivy FS SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        continue-on-error: true
+        with:
+          sarif_file: trivy-fs.sarif
+          category: trivy-fs
+
+      # -- Normal + Extreme --------------------------------------------------
+
+      - name: Semgrep — SAST
+        if: inputs.intensity != 'smoke'
+        uses: semgrep/semgrep-action@v1
+        continue-on-error: true
+        with:
+          # Curated rulesets: p/security-audit (OWASP-aligned), p/nextjs,
+          # p/typescript, p/owasp-top-ten. Plus secrets for extra signal.
+          config: >-
+            p/security-audit
+            p/nextjs
+            p/typescript
+            p/owasp-top-ten
+            p/secrets
+        env:
+          SEMGREP_SARIF_OUTPUT: semgrep.sarif
+
+      - name: Upload Semgrep SARIF
+        if: inputs.intensity != 'smoke' && always()
+        uses: github/codeql-action/upload-sarif@v3
+        continue-on-error: true
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep
+
+      - name: Build Docker image for scanning
+        if: inputs.intensity != 'smoke'
+        run: docker build -f docker/Dockerfile -t auraqa:scan .
+
+      - name: Trivy — Docker image scan
+        if: inputs.intensity != 'smoke'
+        uses: aquasecurity/trivy-action@0.28.0
+        continue-on-error: true
+        with:
+          image-ref: auraqa:scan
+          format: sarif
+          output: trivy-image.sarif
+          severity: HIGH,CRITICAL
+          exit-code: "0"
+
+      - name: Upload Trivy image SARIF
+        if: inputs.intensity != 'smoke' && always()
+        uses: github/codeql-action/upload-sarif@v3
+        continue-on-error: true
+        with:
+          sarif_file: trivy-image.sarif
+          category: trivy-image
+
+      # -- Collect artifacts -------------------------------------------------
+
+      - name: Upload static-analysis artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: static-analysis-${{ inputs.intensity }}
+          retention-days: 30
+          path: |
+            npm-audit.json
+            osv-scanner.sarif
+            trivy-fs.sarif
+            semgrep.sarif
+            trivy-image.sarif
+          if-no-files-found: ignore
+
+      - name: Static-analysis summary
+        if: always()
+        run: |
+          {
+            echo "## 🔒 Security Scan — Static Analysis (intensity: \`${{ inputs.intensity }}\`)"
+            echo ""
+            echo "| Tool | Status |"
+            echo "|---|---|"
+            for f in npm-audit.json osv-scanner.sarif trivy-fs.sarif semgrep.sarif trivy-image.sarif; do
+              if [ -f "$f" ]; then echo "| \`$f\` | ✅ produced |"; else echo "| \`$f\` | — not run |"; fi
+            done
+            echo ""
+            if [ -f npm-audit.json ]; then
+              echo "### npm audit"
+              python3 -c "
+              import json
+              d = json.load(open('npm-audit.json'))
+              meta = d.get('metadata', {}).get('vulnerabilities', {})
+              total = sum(meta.values())
+              if total == 0:
+                  print('No advisories.')
+              else:
+                  print(f'**{total}** advisor{\"y\" if total == 1 else \"ies\"}:')
+                  for sev in ('critical', 'high', 'moderate', 'low', 'info'):
+                      n = meta.get(sev, 0)
+                      if n: print(f'- {sev}: **{n}**')
+              " || echo "(parsing failed)"
+              echo ""
+            fi
+            echo "_Full results in the **static-analysis-${{ inputs.intensity }}** artifact and the Security tab._"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # =========================================================================
+  # Job 2 — Dynamic analysis (DAST against a running instance)
+  # =========================================================================
+  dynamic-analysis:
+    name: Dynamic analysis (${{ inputs.intensity }})
+    runs-on: ubuntu-latest
+    # Extreme scans (ZAP full + Wapiti + SQLMap) can take 60-90 minutes.
+    timeout-minutes: 180
+    needs: static-analysis
+
+    steps:
+      - name: Checkout target branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.target_branch }}
+
+      - name: Write .env from secret (or local fallback for smoke)
+        run: |
+          if [ -n "${{ secrets.ENV_DEV }}" ]; then
+            echo "${{ secrets.ENV_DEV }}" > .env.local
+          else
+            # Minimal local env so the app boots; production secrets aren't
+            # needed for unauthenticated DAST.
+            cat > .env.local <<EOF
+          DATABASE_URL=postgres://auraqa:auraqa@db:5432/auraqa
+          NEXTAUTH_URL=http://localhost:3000
+          NEXTAUTH_SECRET=ci-only-secret-not-used-anywhere-else
+          AUTH_TRUST_HOST=true
+          EOF
+          fi
+
+      - name: Build and start Docker services
+        run: |
+          DOCKER_BUILDKIT=1 docker compose \
+            -f docker/docker-compose.yml \
+            -f docker/docker-compose.dev.yml \
+            up -d --build --wait
+
+      - name: Wait for app to be ready
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:3000 > /dev/null; then
+              echo "App is ready"; exit 0
+            fi
+            echo "Waiting for app... ($i/60)"
+            sleep 2
+          done
+          echo "::error::App failed to start"
+          docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml logs
+          exit 1
+
+      # -- Always-on (every intensity) ---------------------------------------
+
+      - name: OWASP ZAP — baseline (passive)
+        # Passive scan: crawls the app and inspects responses for issues
+        # like missing headers, info disclosure, weak ciphers. Does NOT send
+        # attack payloads — safe to run anywhere.
+        uses: zaproxy/action-baseline@v0.14.0
+        continue-on-error: true
+        with:
+          target: ${{ env.APP_URL }}
+          # Default rules-file lives in repo; cmd_options enables HTML+JSON.
+          cmd_options: "-J zap-baseline.json -r zap-baseline.html -a"
+          # Don't open an issue automatically — we surface in the summary.
+          issue_title: ""
+          allow_issue_writing: false
+          # Fail action on warnings? No — captured to artifacts + summary.
+          fail_action: false
+
+      # -- Normal + Extreme --------------------------------------------------
+
+      - name: Nuclei — template-based scanner
+        if: inputs.intensity != 'smoke'
+        # On normal we run high/critical templates only; on extreme we run
+        # the full default ruleset including info-level findings.
+        uses: projectdiscovery/nuclei-action@main
+        continue-on-error: true
+        with:
+          target: ${{ env.APP_URL }}
+          severity: ${{ inputs.intensity == 'extreme' && 'unknown,info,low,medium,high,critical' || 'high,critical' }}
+          output: nuclei.json
+          flags: "-jsonl -stats -no-color"
+
+      # -- Extreme only — DESTRUCTIVE ACTIVE SCANS ---------------------------
+
+      - name: OWASP ZAP — full active scan (DESTRUCTIVE)
+        if: inputs.intensity == 'extreme'
+        # Sends real attack payloads — SQLi, XSS, path traversal, command
+        # injection, etc. WILL corrupt test data. Only safe against the
+        # ephemeral Docker instance this workflow stands up.
+        uses: zaproxy/action-full-scan@v0.12.0
+        continue-on-error: true
+        with:
+          target: ${{ env.APP_URL }}
+          cmd_options: "-J zap-full.json -r zap-full.html"
+          issue_title: ""
+          allow_issue_writing: false
+          fail_action: false
+
+      - name: Wapiti — DAST (active)
+        if: inputs.intensity == 'extreme'
+        continue-on-error: true
+        run: |
+          docker run --rm --network host \
+            -v "$PWD:/work" -w /work \
+            wapitiscanner/wapiti:latest \
+            -u ${{ env.APP_URL }} \
+            -f html -o wapiti-report.html \
+            --scope domain \
+            --flush-attacks \
+            --verify-ssl 0 \
+            -m "common,sql,xss,xxe,csrf,backup,brute_login_form,buster,cookieflags,exec,file,htp,htaccess,methods,nikto,redirect,shellshock,ssrf,wapp"
+
+      - name: SQLMap — SQL injection probe on common endpoints (DESTRUCTIVE)
+        if: inputs.intensity == 'extreme'
+        continue-on-error: true
+        run: |
+          # Curated list of endpoints that take user input. SQLMap will try
+          # to detect and exploit injection on each one. Output is a tree
+          # of session files under sqlmap-output/.
+          mkdir -p sqlmap-output
+          for url in \
+            "${{ env.APP_URL }}/api/search?q=test" \
+            "${{ env.APP_URL }}/api/articles?page=1&limit=10" \
+            "${{ env.APP_URL }}/api/forum/threads?categoryId=1" \
+          ; do
+            echo "::group::sqlmap $url"
+            docker run --rm --network host \
+              -v "$PWD/sqlmap-output:/output" \
+              parrotsec/sqlmap:latest \
+              -u "$url" \
+              --batch \
+              --level=3 \
+              --risk=2 \
+              --random-agent \
+              --output-dir=/output \
+              || true
+            echo "::endgroup::"
+          done
+
+      # -- Collect artifacts -------------------------------------------------
+
+      - name: Upload DAST artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dynamic-analysis-${{ inputs.intensity }}
+          retention-days: 30
+          path: |
+            zap-baseline.json
+            zap-baseline.html
+            zap-full.json
+            zap-full.html
+            nuclei.json
+            wapiti-report.html
+            sqlmap-output/
+          if-no-files-found: ignore
+
+      - name: Dynamic-analysis summary
+        if: always()
+        run: |
+          {
+            echo "## 🔥 Security Scan — Dynamic Analysis (intensity: \`${{ inputs.intensity }}\`)"
+            echo ""
+            if [ "${{ inputs.intensity }}" = "extreme" ]; then
+              echo "> ⚠️ **Destructive scans ran.** Test data on the ephemeral Docker"
+              echo "> instance was likely corrupted. The instance has been torn down."
+              echo ""
+            fi
+            echo "| Tool | Output | Status |"
+            echo "|---|---|---|"
+            for pair in "ZAP baseline:zap-baseline.html" \
+                       "ZAP full active:zap-full.html" \
+                       "Nuclei:nuclei.json" \
+                       "Wapiti:wapiti-report.html"; do
+              name="${pair%%:*}"; file="${pair##*:}"
+              if [ -f "$file" ]; then echo "| $name | \`$file\` | ✅ produced |"
+              else echo "| $name | \`$file\` | — not run |"; fi
+            done
+            if [ -d sqlmap-output ] && [ -n "$(ls -A sqlmap-output 2>/dev/null)" ]; then
+              echo "| SQLMap | \`sqlmap-output/\` | ✅ produced |"
+            else
+              echo "| SQLMap | \`sqlmap-output/\` | — not run |"
+            fi
+            echo ""
+            # ZAP baseline JSON has a `site[].alerts[]` array with `riskcode`
+            # (0=info, 1=low, 2=medium, 3=high). Count by severity.
+            for json in zap-baseline.json zap-full.json; do
+              if [ -f "$json" ]; then
+                echo "### $(basename $json .json)"
+                python3 -c "
+                import json
+                d = json.load(open('$json'))
+                buckets = {0:'info',1:'low',2:'medium',3:'high'}
+                counts = {v:0 for v in buckets.values()}
+                for site in d.get('site', []):
+                    for a in site.get('alerts', []):
+                        risk = int(a.get('riskcode', 0))
+                        counts[buckets.get(risk, 'info')] += 1
+                total = sum(counts.values())
+                if total == 0:
+                    print('No alerts.')
+                else:
+                    print(f'**{total}** alert(s):')
+                    for sev in ('high','medium','low','info'):
+                        n = counts.get(sev, 0)
+                        if n: print(f'- {sev}: **{n}**')
+                " || echo "(parsing failed)"
+                echo ""
+              fi
+            done
+            if [ -f nuclei.json ]; then
+              echo "### Nuclei"
+              total=$(wc -l < nuclei.json || echo 0)
+              echo "**$total** finding(s) in \`nuclei.json\` (one per line, JSON-lines)."
+              echo ""
+            fi
+            echo "_Full reports in the **dynamic-analysis-${{ inputs.intensity }}** artifact._"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Stop Docker services
+        if: always()
+        run: docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml down -v
