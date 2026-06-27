@@ -96,6 +96,7 @@ src/
 | [Development](docs/DEVELOPMENT.md)       | Local setup, coding standards, Git workflow        |
 | [Testing](docs/TESTING.md)               | Test strategy, running tests                       |
 | [Deployment](docs/DEPLOYMENT.md)         | Docker deployment guide                            |
+| [Security Scan](docs/SECURITY.md)        | Manually-dispatched ZAP/Nuclei/Trivy/etc. workflow |
 | [Contributing](docs/CONTRIBUTING.md)     | How to contribute                                  |
 
 ## Scripts
