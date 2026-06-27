@@ -274,18 +274,18 @@ jobs:
             if [ -f npm-audit.json ]; then
               echo "### npm audit"
               python3 -c "
-              import json
-              d = json.load(open('npm-audit.json'))
-              meta = d.get('metadata', {}).get('vulnerabilities', {})
-              total = sum(meta.values())
-              if total == 0:
-                  print('No advisories.')
-              else:
-                  print(f'**{total}** advisor{\"y\" if total == 1 else \"ies\"}:')
-                  for sev in ('critical', 'high', 'moderate', 'low', 'info'):
-                      n = meta.get(sev, 0)
-                      if n: print(f'- {sev}: **{n}**')
-              " || echo "(parsing failed)"
+          import json
+          d = json.load(open('npm-audit.json'))
+          meta = d.get('metadata', {}).get('vulnerabilities', {})
+          total = sum(meta.values())
+          if total == 0:
+              print('No advisories.')
+          else:
+              print(f'**{total}** advisor{\"y\" if total == 1 else \"ies\"}:')
+              for sev in ('critical', 'high', 'moderate', 'low', 'info'):
+                 n = meta.get(sev, 0)
+                 if n: print(f'- {sev}: **{n}**')
+          " || echo "(parsing failed)"
               echo ""
             fi
             echo "_Full results in the **static-analysis-${INTENSITY}** artifact and the Security tab._"
@@ -323,10 +323,12 @@ jobs:
           fi
 
       - name: Build and start Docker services
+        # Use the production compose (not dev) so DAST scans the same CSP /
+        # headers that real users see — dev mode injects 'unsafe-eval' for
+        # HMR, causing a false ZAP alert [10055].
         run: |
           DOCKER_BUILDKIT=1 docker compose \
             -f docker/docker-compose.yml \
-            -f docker/docker-compose.dev.yml \
             up -d --build --wait
 
       - name: Wait for app to be ready
@@ -339,7 +341,7 @@ jobs:
             sleep 2
           done
           echo "::error::App failed to start"
-          docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml logs
+          docker compose -f docker/docker-compose.yml logs
           exit 1
 
       # -- Always-on (every intensity) ---------------------------------------
@@ -504,23 +506,23 @@ jobs:
               if [ -f "$json" ]; then
                 echo "### $(basename $json .json)"
                 python3 -c "
-                import json
-                d = json.load(open('$json'))
-                buckets = {0:'info',1:'low',2:'medium',3:'high'}
-                counts = {v:0 for v in buckets.values()}
-                for site in d.get('site', []):
-                    for a in site.get('alerts', []):
-                        risk = int(a.get('riskcode', 0))
-                        counts[buckets.get(risk, 'info')] += 1
-                total = sum(counts.values())
-                if total == 0:
-                    print('No alerts.')
-                else:
-                    print(f'**{total}** alert(s):')
-                    for sev in ('high','medium','low','info'):
-                        n = counts.get(sev, 0)
-                        if n: print(f'- {sev}: **{n}**')
-                " || echo "(parsing failed)"
+          import json
+          d = json.load(open('$json'))
+          buckets = {0:'info',1:'low',2:'medium',3:'high'}
+          counts = {v:0 for v in buckets.values()}
+          for site in d.get('site', []):
+              for a in site.get('alerts', []):
+                 risk = int(a.get('riskcode', 0))
+                 counts[buckets.get(risk, 'info')] += 1
+          total = sum(counts.values())
+          if total == 0:
+              print('No alerts.')
+          else:
+              print(f'**{total}** alert(s):')
+              for sev in ('high','medium','low','info'):
+                 n = counts.get(sev, 0)
+                 if n: print(f'- {sev}: **{n}**')
+          " || echo "(parsing failed)"
                 echo ""
               fi
             done
@@ -535,7 +537,7 @@ jobs:
 
       - name: Stop Docker services
         if: always()
-        run: docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml down -v
+        run: docker compose -f docker/docker-compose.yml down -v
 
   # =========================================================================
   # Job 3 — Hand off findings to the Copilot coding agent

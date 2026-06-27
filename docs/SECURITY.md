@@ -138,6 +138,12 @@ the Security Scan workflow:
 - `Cross-Origin-Embedder-Policy: credentialless` — mitigates Spectre-class
   side-channel attacks [90004]. Uses `credentialless` instead of
   `require-corp` to avoid breaking same-origin fonts/images that lack CORP.
+- `Cross-Origin-Opener-Policy: same-origin` — prevents other windows from
+  navigating or scripting this origin (Nuclei `cross-origin-opener-policy`).
+- `Cross-Origin-Resource-Policy: same-origin` — prevents cross-origin
+  inclusion of this resource (ZAP full [90004], Nuclei `cross-origin-resource-policy`).
+- `X-Permitted-Cross-Domain-Policies: none` — blocks Adobe Flash/Acrobat
+  cross-domain data loading (Nuclei `x-permitted-cross-domain-policies`).
 
 CSP currently allows `'unsafe-inline'` for `script-src`/`style-src` because
 Next.js emits inline runtime bootstrap and styled-jsx blocks. Tightening to
