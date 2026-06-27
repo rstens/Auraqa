@@ -42,6 +42,14 @@ const SECURITY_HEADERS = [
   // Prevents Adobe Flash / Acrobat from loading data from this domain
   // (Nuclei http-missing-security-headers:x-permitted-cross-domain-policies).
   { key: "X-Permitted-Cross-Domain-Policies", value: "none" },
+  // Enforces HTTPS for 1 year (Nuclei http-missing-security-headers:strict-transport-security).
+  // `includeSubDomains` prevents mixed-content on sub-domains.
+  // In local dev / CI (plain HTTP) browsers simply ignore HSTS, so this is
+  // safe to ship unconditionally.
+  {
+    key: "Strict-Transport-Security",
+    value: "max-age=31536000; includeSubDomains",
+  },
   {
     key: "Content-Security-Policy",
     value: [
