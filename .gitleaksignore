@@ -1,0 +1,15 @@
+# Suppressions for the gitleaks scan.
+#
+# Format: one fingerprint per line — `<commit-sha>:<file>:<rule>:<line>`.
+# Add a comment with the WHY for every entry so future reviewers can audit.
+#
+# Run `gitleaks detect --verbose` locally to see the fingerprint for a
+# finding before adding it here.
+
+# Initial scaffold (commit e5bdced9) wrote a fake NEXTAUTH_SECRET into the
+# CI workflow as a placeholder value for the `next build` step. The string
+# itself ("ci-test-secret-at-least-32-characters-long") was never a real
+# credential — the actual NEXTAUTH_SECRET for the live environments lives
+# in GitHub Secrets and is injected at runtime via `secrets.ENV_DEV`.
+# Rewriting git history to scrub the placeholder isn't worth the cost.
+e5bdced9259bbffb0eb6202b4578a1af62d5e99a:.github/workflows/ci.yml:generic-api-key:40
