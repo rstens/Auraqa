@@ -1,7 +1,7 @@
 # AuraQA
 
 [![CI](https://github.com/rstens/Auraqa/actions/workflows/ci.yml/badge.svg)](https://github.com/rstens/Auraqa/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/rstens/Auraqa/branch/dev/graph/badge.svg)](https://codecov.io/gh/rstens/Auraqa)
+[![codecov](https://codecov.io/gh/rstens/Auraqa/graph/badge.svg?token=tQgc5JrwPr)](https://codecov.io/gh/rstens/Auraqa)
 
 **A community platform for software testers** — consolidating knowledge articles, community forums/Q&A, and a testing tools directory into a single destination.
 
