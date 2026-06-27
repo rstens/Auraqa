@@ -109,6 +109,7 @@ export default async function ThreadPage({ params }: { params: Promise<{ id: str
         </div>
         <div
           className="prose prose-slate mt-4 max-w-none dark:prose-invert"
+          // nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml -- HTML produced by renderMarkdown() which runs rehype-sanitize (src/lib/markdown.ts).
           dangerouslySetInnerHTML={{ __html: threadHtml }}
         />
       </div>

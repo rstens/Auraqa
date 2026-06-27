@@ -9,8 +9,45 @@
 
 import type { NextConfig } from "next";
 
+// Security response headers — addresses ZAP baseline findings:
+// missing X-Content-Type-Options, X-Frame-Options/CSP frame-ancestors
+// (anti-clickjacking), Content-Security-Policy, Referrer-Policy,
+// Permissions-Policy, and the "Server leaks via X-Powered-By" alert.
+//
+// CSP is intentionally permissive for inline styles/scripts because Next.js
+// emits inline runtime bootstrap and styled-jsx blocks; tightening to
+// nonce-only requires a middleware that injects per-request nonces and is
+// tracked as future work in docs/SECURITY.md.
+const SECURITY_HEADERS = [
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  {
+    key: "Permissions-Policy",
+    value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+  },
+  {
+    key: "Content-Security-Policy",
+    value: [
+      "default-src 'self'",
+      "base-uri 'self'",
+      "frame-ancestors 'none'",
+      "form-action 'self'",
+      "object-src 'none'",
+      "img-src 'self' data: https://avatars.githubusercontent.com https://lh3.googleusercontent.com",
+      "font-src 'self' data:",
+      "style-src 'self' 'unsafe-inline'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "connect-src 'self'",
+    ].join("; "),
+  },
+];
+
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Strip the `X-Powered-By: Next.js` response header — fingerprints the
+  // framework version for attackers (ZAP alert 10037).
+  poweredByHeader: false,
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "avatars.githubusercontent.com" },
@@ -29,6 +66,7 @@ const nextConfig: NextConfig = {
             key: "Cache-Control",
             value: "private, no-cache, max-age=0, must-revalidate",
           },
+          ...SECURITY_HEADERS,
         ],
       },
     ];

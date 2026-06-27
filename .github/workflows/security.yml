@@ -135,7 +135,7 @@ jobs:
 
       - name: Upload OSV-Scanner SARIF to Security tab
         if: always() && hashFiles('osv-scanner.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         continue-on-error: true
         with:
           sarif_file: osv-scanner.sarif
@@ -155,7 +155,7 @@ jobs:
 
       - name: Upload Trivy FS SARIF
         if: always() && hashFiles('trivy-fs.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         continue-on-error: true
         with:
           sarif_file: trivy-fs.sarif
@@ -186,7 +186,7 @@ jobs:
 
       - name: Upload Semgrep SARIF
         if: inputs.intensity != 'smoke' && always() && hashFiles('semgrep.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         continue-on-error: true
         with:
           sarif_file: semgrep.sarif
@@ -209,7 +209,7 @@ jobs:
 
       - name: Upload Trivy image SARIF
         if: inputs.intensity != 'smoke' && always() && hashFiles('trivy-image.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         continue-on-error: true
         with:
           sarif_file: trivy-image.sarif
@@ -233,9 +233,13 @@ jobs:
 
       - name: Static-analysis summary
         if: always()
+        # Reference $INTENSITY (env-injected at workflow level) instead of
+        # ${{ inputs.intensity }} so this script can't be turned into a shell
+        # injection vector by a hostile workflow_dispatch payload —
+        # `yaml.github-actions.security.run-shell-injection`.
         run: |
           {
-            echo "## 🔒 Security Scan — Static Analysis (intensity: \`${{ inputs.intensity }}\`)"
+            echo "## 🔒 Security Scan — Static Analysis (intensity: \`${INTENSITY}\`)"
             echo ""
             echo "| Tool | Status |"
             echo "|---|---|"
@@ -260,7 +264,7 @@ jobs:
               " || echo "(parsing failed)"
               echo ""
             fi
-            echo "_Full results in the **static-analysis-${{ inputs.intensity }}** artifact and the Security tab._"
+            echo "_Full results in the **static-analysis-${INTENSITY}** artifact and the Security tab._"
           } >> "$GITHUB_STEP_SUMMARY"
 
   # =========================================================================
@@ -444,11 +448,12 @@ jobs:
 
       - name: Dynamic-analysis summary
         if: always()
+        # See `run-shell-injection` note on the static-analysis summary above.
         run: |
           {
-            echo "## 🔥 Security Scan — Dynamic Analysis (intensity: \`${{ inputs.intensity }}\`)"
+            echo "## 🔥 Security Scan — Dynamic Analysis (intensity: \`${INTENSITY}\`)"
             echo ""
-            if [ "${{ inputs.intensity }}" = "extreme" ]; then
+            if [ "$INTENSITY" = "extreme" ]; then
               echo "> ⚠️ **Destructive scans ran.** Test data on the ephemeral Docker"
               echo "> instance was likely corrupted. The instance has been torn down."
               echo ""
@@ -501,7 +506,7 @@ jobs:
               echo "**$total** finding(s) in \`nuclei.json\` (one per line, JSON-lines)."
               echo ""
             fi
-            echo "_Full reports in the **dynamic-analysis-${{ inputs.intensity }}** artifact._"
+            echo "_Full reports in the **dynamic-analysis-${INTENSITY}** artifact._"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Stop Docker services

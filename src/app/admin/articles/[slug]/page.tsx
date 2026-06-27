@@ -100,6 +100,7 @@ export default async function AdminArticleDetailPage({
       <div
         data-testid="admin-article-content"
         className="prose prose-slate mt-8 max-w-none dark:prose-invert"
+        // nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml -- HTML produced by renderMarkdown() which runs rehype-sanitize (src/lib/markdown.ts).
         dangerouslySetInnerHTML={{ __html: contentHtml }}
       />
     </div>
