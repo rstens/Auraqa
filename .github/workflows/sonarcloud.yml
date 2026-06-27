@@ -21,11 +21,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  # Sonar needs read on contents (checkout) and pull-requests (to attach
-  # the analysis decoration to the PR). No write scopes anywhere.
+  # Read-only permissions; checkout requires repository contents.
   contents: read
-  pull-requests: read
-
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
