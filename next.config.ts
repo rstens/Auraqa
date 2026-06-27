@@ -33,6 +33,15 @@ const SECURITY_HEADERS = [
   // resources. Uses "credentialless" to avoid breaking same-origin subresources
   // (fonts, images) that don't send CORP headers (ZAP alert 90004).
   { key: "Cross-Origin-Embedder-Policy", value: "credentialless" },
+  // Prevents other windows from navigating or scripting this origin
+  // (Nuclei http-missing-security-headers:cross-origin-opener-policy).
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  // Restricts which origins may embed this resource — "same-origin"
+  // prevents cross-origin inclusion (ZAP full 90004, Nuclei CORP).
+  { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
+  // Prevents Adobe Flash / Acrobat from loading data from this domain
+  // (Nuclei http-missing-security-headers:x-permitted-cross-domain-policies).
+  { key: "X-Permitted-Cross-Domain-Policies", value: "none" },
   {
     key: "Content-Security-Policy",
     value: [
