@@ -4,6 +4,7 @@ import { eq, count, desc, ilike } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { timeAgo } from "@/lib/utils";
 import Link from "next/link";
+import { UserAvatar } from "@/components/shared/user-avatar";
 
 export const dynamic = "force-dynamic";
 
@@ -47,9 +48,11 @@ export default async function ProfilePage({
   return (
     <div data-testid="profile-page" className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex items-center gap-5">
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-blue-600 text-2xl font-medium text-white">
-          {(user.name ?? user.username ?? "U")[0].toUpperCase()}
-        </div>
+        <UserAvatar
+          src={user.image}
+          name={user.name ?? user.username}
+          size="lg"
+        />
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">

@@ -12,6 +12,7 @@
  * @see docs/DATABASE.md for design decisions
  */
 
+import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import {
   pgTable,
   text,
@@ -203,7 +204,13 @@ export const forumReplies = pgTable("forum_replies", {
   id: uuid("id").primaryKey(),
   threadId: uuid("thread_id").notNull().references(() => forumThreads.id, { onDelete: "cascade" }),
   authorId: uuid("author_id").notNull().references(() => users.id, { onDelete: "set null" }),
-  parentId: uuid("parent_id"),
+  // Self-reference: a reply's parent is another reply in the same thread.
+  // AnyPgColumn cast breaks the circular forward-reference at type level.
+  // Nullable + ON DELETE SET NULL so removing a parent promotes its
+  // children to top-level instead of orphaning the rows.
+  parentId: uuid("parent_id").references((): AnyPgColumn => forumReplies.id, {
+    onDelete: "set null",
+  }),
   content: text("content").notNull(),
   isAccepted: boolean("is_accepted").notNull().default(false),
   voteScore: integer("vote_score").notNull().default(0),
