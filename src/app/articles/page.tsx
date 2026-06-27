@@ -122,6 +122,7 @@ async function ArticleCard({
       {summaryHtml && (
         <div
           className="prose prose-sm prose-slate mt-2 max-w-none dark:prose-invert"
+          // nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml -- HTML produced by renderMarkdown() which runs rehype-sanitize (src/lib/markdown.ts).
           dangerouslySetInnerHTML={{ __html: summaryHtml }}
         />
       )}

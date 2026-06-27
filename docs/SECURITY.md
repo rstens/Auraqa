@@ -99,3 +99,33 @@ that mirrors the OSV-Scanner pattern if needed.
 - **normal** — weekly or pre-release; full static analysis + DAST
 - **extreme** — red-team-style pre-launch validation; expect a corrupted
   test DB and a ~90-minute runtime; review every finding by hand
+
+## Accepted findings
+
+A handful of advisories are tracked but not fixable from this repo. These
+are surfaced by every `npm audit` run and intentionally left in place:
+
+| Package                        | Severity | Why we accept it                                                                                                  |
+| ------------------------------ | -------- | ----------------------------------------------------------------------------------------------------------------- |
+| `esbuild` (via `drizzle-kit` → | moderate | Dev-only tool. `drizzle-kit` bundles its own outdated `esbuild`. The vulnerability (dev-server CORS) only matters |
+| `@esbuild-kit/esm-loader`)     |          | when running the bundler with a publicly-reachable HTTP port — we don't.                                          |
+| `postcss` (via `next`)         | moderate | Build-time only. Next.js ships its own copy; we cannot upgrade until upstream Next ships a release that pins      |
+|                                |          | `postcss >= 8.5.10`. The XSS sink (`Stringify` of attacker-controlled CSS) is not reachable from our app.         |
+
+## Runtime hardening
+
+The app sets the following response headers on every route (see
+`next.config.ts`). These were added in response to ZAP baseline alerts from
+the Security Scan workflow:
+
+- `X-Content-Type-Options: nosniff` — addresses [10021]
+- `X-Frame-Options: DENY` + `frame-ancestors 'none'` in CSP — anti-clickjacking [10020]
+- `Content-Security-Policy` — default-src self, no inline frames, restricts script/style/image origins [10038]
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Permissions-Policy` — denies camera/microphone/geolocation/payment/USB [10063]
+- `poweredByHeader: false` strips `X-Powered-By: Next.js` [10037]
+
+CSP currently allows `'unsafe-inline'` for `script-src`/`style-src` because
+Next.js emits inline runtime bootstrap and styled-jsx blocks. Tightening to
+nonce-only requires a middleware that injects per-request nonces and is
+deferred to a follow-up.

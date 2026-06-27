@@ -123,6 +123,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
             <p className="text-xs font-medium text-blue-700 dark:text-blue-400">AI Summary</p>
             <div
               className="prose prose-sm mt-1 max-w-none text-blue-900 dark:text-blue-200"
+              // nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml -- HTML produced by renderMarkdown() which runs rehype-sanitize (src/lib/markdown.ts).
               dangerouslySetInnerHTML={{ __html: aiSummaryHtml }}
             />
           </div>
@@ -131,6 +132,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
         <div
           data-testid="article-content"
           className="prose prose-slate mt-8 max-w-none dark:prose-invert"
+          // nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml -- HTML produced by renderMarkdown() which runs rehype-sanitize (src/lib/markdown.ts).
           dangerouslySetInnerHTML={{ __html: contentHtml }}
         />
       </article>
