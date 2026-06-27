@@ -562,11 +562,8 @@ jobs:
              prompt, use that instead.
 
           2. Fetch the per-job logs for both jobs in that run via
-             mcp__github__get_job_logs with return_content=true. The logs are too
-             large for a single tool call — the MCP will save them to a file under
-             /root/.claude/projects/.../tool-results/. Parse the JSON wrapper
-             (`logs_content` field) and write the inner log to the scratchpad with a
-             small Python snippet, then grep for findings.
+             mcp__github__get_job_logs with return_content=true. If the logs are large,
+             save them to a local file and grep for findings.
 
              Do NOT try to download the artifact ZIPs. The agent proxy blocks Azure
              blob storage (productionresultssa2.blob.core.windows.net) with HTTP 403
