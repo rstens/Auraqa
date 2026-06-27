@@ -115,10 +115,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token;
     },
     session({ session, token }) {
+      // Type augmentation in src/types/next-auth.d.ts declares the session
+      // user fields. The JWT-side fields come back as `{}` because the
+      // module augmentation isn't applied by next-auth's runtime — coerce
+      // through String() once to keep the rest of the codebase cast-free.
       if (session.user) {
-        session.user.id = token.id as string;
-        (session.user as unknown as Record<string, unknown>).role = token.role as string;
-        (session.user as unknown as Record<string, unknown>).username = token.username as string;
+        session.user.id = typeof token.id === "string" ? token.id : "";
+        session.user.role = typeof token.role === "string" ? token.role : "user";
+        session.user.username =
+          typeof token.username === "string" ? token.username : null;
       }
       return session;
     },
@@ -142,5 +147,5 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
 export async function isAdmin(): Promise<boolean> {
   const session = await auth();
-  return (session?.user as Record<string, unknown> | undefined)?.role === "admin";
+  return session?.user?.role === "admin";
 }
