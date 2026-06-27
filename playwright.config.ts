@@ -6,6 +6,8 @@
  * - `html` — full HTML report written to `playwright-report/`. In CI we
  *   upload this directory as an artifact so failures are debuggable from
  *   the GitHub Actions UI.
+ * - `json` — structured per-test results at `playwright-results.json` for
+ *   the CI job summary script (`scripts/playwright-summary.py`).
  * - `github` — annotates failed assertions on the PR in CI (no-op locally).
  *
  * `trace`, `screenshot`, and `video` are kept off for green runs and
@@ -21,8 +23,17 @@ export default defineConfig({
   timeout: 30000,
   retries: isCI ? 1 : 0,
   reporter: isCI
-    ? [["list"], ["html", { outputFolder: "playwright-report", open: "never" }], ["github"]]
-    : [["list"], ["html", { outputFolder: "playwright-report", open: "never" }]],
+    ? [
+        ["list"],
+        ["html", { outputFolder: "playwright-report", open: "never" }],
+        ["json", { outputFile: "playwright-results.json" }],
+        ["github"],
+      ]
+    : [
+        ["list"],
+        ["html", { outputFolder: "playwright-report", open: "never" }],
+        ["json", { outputFile: "playwright-results.json" }],
+      ],
   use: {
     baseURL: "http://localhost:3000",
     headless: true,
