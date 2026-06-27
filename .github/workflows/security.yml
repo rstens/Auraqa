@@ -86,6 +86,12 @@ jobs:
 
       - name: GitLeaks — secrets in git history
         uses: gitleaks/gitleaks-action@v2
+        # gitleaks-action exits non-zero on findings (default --exit-code=2).
+        # Without continue-on-error, a single finding aborts every static
+        # step below it. We want findings to be reported (SARIF artifact is
+        # still uploaded by the action) without killing the rest of the
+        # static-analysis pipeline.
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # GitLeaks license env var; the action runs in free mode without it
