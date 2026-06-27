@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/api/articles/aaaaaaaaaaaaaaaaaaaa
+  url: {{baseUrl}}/api/articles/{{bigSlug}}
   body: none
   auth: none
 }
@@ -13,10 +13,6 @@ get {
 script:pre-request {
   // 2_000-char slug. Should 404 (no match) cleanly, not 414/500.
   bru.setVar("bigSlug", "a".repeat(2_000));
-}
-
-vars:pre-request {
-  bigSlug:
 }
 
 tests {
