@@ -36,22 +36,18 @@ updates:
       include: scope
     # Group related updates so we get one PR per cluster instead of a
     # PR per package.
+    #
+    # ORDER MATTERS: Dependabot evaluates groups top-to-bottom and a dep is
+    # placed into the FIRST group that matches. Framework-specific groups
+    # are listed BEFORE the broad `production-minor-and-patch` rule so
+    # next / react / drizzle / auth always get their own dedicated PR —
+    # otherwise the bulk group swallows them (which happened in PR #35:
+    # next 16.2.6 → 16.2.9 + react 19.2.4 → 19.2.7 got bundled with
+    # safe bumps like pg/tailwind, breaking the credentials callback E2E
+    # tests and leaving no way to merge the safe bumps alone).
     groups:
-      # Patch + minor across every runtime dep — usually safe to merge in
-      # bulk after CI passes.
-      production-minor-and-patch:
-        dependency-type: production
-        update-types:
-          - minor
-          - patch
-      # Same idea for devDeps (Prettier, ESLint, Vitest, Playwright, types).
-      development-minor-and-patch:
-        dependency-type: development
-        update-types:
-          - minor
-          - patch
-      # Anchor framework majors get their own PR so they're reviewed
-      # carefully rather than swept into the bulk group above.
+      # Anchor framework deps get their own PR so they're reviewed
+      # carefully rather than swept into the bulk groups below.
       next:
         patterns:
           - next
@@ -71,6 +67,19 @@ updates:
         patterns:
           - next-auth
           - "@auth/*"
+      # Patch + minor across the remaining runtime deps — usually safe to
+      # merge in bulk after CI passes.
+      production-minor-and-patch:
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
+      # Same idea for devDeps (Prettier, ESLint, Vitest, Playwright, types).
+      development-minor-and-patch:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
 
   # ---------------------------------------------------------------------------
   # GitHub Actions — pin updates for the workflows under .github/workflows/
