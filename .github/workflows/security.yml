@@ -622,15 +622,16 @@ jobs:
           # assign @Copilot via the REST API. `--assignee` on `gh issue
           # create` only accepts human users in older gh versions, so we
           # use the REST endpoint to add the Copilot bot.
-          issue_url=$(gh issue create \
+          if ! issue_url=$(gh issue create \
             --repo "$REPO_SLUG" \
             --title "Security Scan #${RUN_ID} — triage findings (${INTENSITY})" \
-            --label security \
-            --body "$body")
+            --body "$body"); then
+            echo "::warning::Failed to create triage issue; skipping Copilot assignment."
+            exit 0
+          fi
 
           issue_num="${issue_url##*/}"
           echo "Filed $issue_url"
-
           if gh api -X POST \
               "/repos/${REPO_SLUG}/issues/${issue_num}/assignees" \
               -f "assignees[]=Copilot" >/dev/null 2>&1; then
