@@ -115,3 +115,11 @@ updates:
     commit-message:
       prefix: chore(docker)
       include: scope
+    ignore:
+      # Pin Node to the current LTS line — major bumps need a human to
+      # validate Next.js/NextAuth/etc. compatibility (the 22 → 26 attempt
+      # in PR #31 broke every admin login E2E test). When we want to move
+      # to the next LTS, bump manually and re-enable.
+      - dependency-name: node
+        update-types:
+          - version-update:semver-major
