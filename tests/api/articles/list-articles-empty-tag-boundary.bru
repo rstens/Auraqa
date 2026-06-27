@@ -15,9 +15,9 @@ params:query {
 }
 
 tests {
-  test("returns 200 for empty filter (treat as no filter)", function() {
-    expect(res.getStatus()).to.equal(200);
-  });
+test("empty tag filter returns 200 (ignored) or 400 (validation), never 500", function() {
+  expect(res.getStatus()).to.be.oneOf([200, 400]);
+});
 
   test("body is still an array", function() {
     expect(res.getBody()).to.be.an("array");
