@@ -1,5 +1,7 @@
 # AuraQA
 
+[![CI](https://github.com/rstens/Auraqa/actions/workflows/ci.yml/badge.svg)](https://github.com/rstens/Auraqa/actions/workflows/ci.yml)
+
 **A community platform for software testers** — consolidating knowledge articles, community forums/Q&A, and a testing tools directory into a single destination.
 
 Built with Next.js 15, PostgreSQL 18, and Claude AI.
