@@ -79,6 +79,15 @@ jobs:
           # GitLeaks needs full history to scan commits.
           fetch-depth: 0
 
+      - name: Capture scan target metadata
+        id: scan-target
+        run: |
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          case "$TARGET_BRANCH" in
+            refs/*) echo "ref=$TARGET_BRANCH" >> "$GITHUB_OUTPUT" ;;
+            *) echo "ref=refs/heads/$TARGET_BRANCH" >> "$GITHUB_OUTPUT" ;;
+          esac
+
       - uses: actions/setup-node@v4
         with:
           node-version: "22.x"
@@ -102,6 +111,20 @@ jobs:
           # GitLeaks license env var; the action runs in free mode without it
           # but emits a warning. Set GITLEAKS_LICENSE in repo secrets to silence.
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+      - name: Upload GitLeaks SARIF to Security tab
+        # gitleaks-action writes results.sarif to the workspace root; route
+        # it to Security → Code scanning alerts so it shows alongside the
+        # other static-analysis tools instead of only living in the
+        # `gitleaks-results.sarif.zip` artifact.
+        if: always() && hashFiles('results.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
+        continue-on-error: true
+        with:
+          sarif_file: results.sarif
+          category: gitleaks
+          ref: ${{ steps.scan-target.outputs.ref }}
+          sha: ${{ steps.scan-target.outputs.sha }}
 
       - name: npm audit — registry advisories
         # Don't fail the job on findings — captured to the artifact and summary.
@@ -225,6 +248,7 @@ jobs:
           retention-days: 30
           path: |
             npm-audit.json
+            results.sarif
             osv-scanner.sarif
             trivy-fs.sarif
             semgrep.sarif
@@ -243,7 +267,7 @@ jobs:
             echo ""
             echo "| Tool | Status |"
             echo "|---|---|"
-            for f in npm-audit.json osv-scanner.sarif trivy-fs.sarif semgrep.sarif trivy-image.sarif; do
+            for f in npm-audit.json results.sarif osv-scanner.sarif trivy-fs.sarif semgrep.sarif trivy-image.sarif; do
               if [ -f "$f" ]; then echo "| \`$f\` | ✅ produced |"; else echo "| \`$f\` | — not run |"; fi
             done
             echo ""
