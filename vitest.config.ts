@@ -19,7 +19,7 @@ export default defineConfig({
     include: ["src/**/*.test.{ts,tsx}"],
     coverage: {
       provider: "v8",
-      reporter: ["text", "text-summary", "html", "json-summary"],
+      reporter: ["text", "text-summary", "html", "json-summary", "lcov"],
       // In Vitest 4, `coverage.include` patterns are enough to enumerate every
       // matching file (the old `all: true` option was removed; passing it is a
       // type error).
