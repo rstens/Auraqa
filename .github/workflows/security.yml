@@ -73,7 +73,7 @@ jobs:
 
     steps:
       - name: Checkout target branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ inputs.target_branch }}
           # GitLeaks needs full history to scan commits.
@@ -88,7 +88,7 @@ jobs:
             *) echo "ref=refs/heads/$TARGET_BRANCH" >> "$GITHUB_OUTPUT" ;;
           esac
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "22.x"
           cache: npm
@@ -99,7 +99,7 @@ jobs:
       # -- Always-on (every intensity) ---------------------------------------
 
       - name: GitLeaks — secrets in git history
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@v3
         # gitleaks-action exits non-zero on findings (default --exit-code=2).
         # Without continue-on-error, a single finding aborts every static
         # step below it. We want findings to be reported (SARIF artifact is
@@ -242,7 +242,7 @@ jobs:
 
       - name: Upload static-analysis artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: static-analysis-${{ inputs.intensity }}
           retention-days: 30
@@ -303,7 +303,7 @@ jobs:
 
     steps:
       - name: Checkout target branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ inputs.target_branch }}
 
@@ -456,7 +456,7 @@ jobs:
 
       - name: Upload DAST artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dynamic-analysis-${{ inputs.intensity }}
           retention-days: 30
