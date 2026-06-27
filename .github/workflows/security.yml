@@ -145,6 +145,9 @@ jobs:
         # path. The official osv-scanner-action wrapper's --output flag
         # writes inside the container's CWD, not the runner workspace, and
         # the file disappears when the container exits.
+        #
+        # Swallow only exit code 1 (findings present) while propagating
+        # any other non-zero exit code.
         continue-on-error: true
         run: |
           docker run --rm -v "$PWD:/src" -w /src \
@@ -152,8 +155,12 @@ jobs:
             scan source \
             --recursive \
             --format=sarif \
-            --output=osv-scanner.sarif \
+            --output-file=osv-scanner.sarif \
             ./
+          ec=$?
+          if [ "$ec" -ne 0 ] && [ "$ec" -ne 1 ]; then
+            exit "$ec"
+          fi
           ls -la osv-scanner.sarif || echo "(SARIF not produced)"
 
       - name: Upload OSV-Scanner SARIF to Security tab
@@ -362,6 +369,10 @@ jobs:
           target: ${{ env.APP_URL }}
           allow_issue_writing: false
           fail_action: false
+          # Both action-baseline and action-full-scan default to uploading
+          # under `zap_scan` — on extreme runs both fire and the second
+          # upload errors with `409 Conflict`. Disambiguate per scan.
+          artifact_name: zap_baseline
 
       - name: Capture ZAP baseline reports
         if: always()
@@ -406,6 +417,9 @@ jobs:
           target: ${{ env.APP_URL }}
           allow_issue_writing: false
           fail_action: false
+          # See artifact_name note on the baseline step above — needs to
+          # be distinct or the upload conflicts with `zap_baseline`.
+          artifact_name: zap_full_active
 
       - name: Capture ZAP full-scan reports
         if: inputs.intensity == 'extreme' && always()
@@ -415,12 +429,18 @@ jobs:
 
       - name: Wapiti — DAST (active)
         if: inputs.intensity == 'extreme'
+        # `wapitiscanner/wapiti` doesn't exist on Docker Hub (the old
+        # namespace was retired); install Wapiti from PyPI on the runner
+        # instead. Avoids depending on a third-party image and is
+        # comparable in cost (~10s install vs ~10s pull).
         continue-on-error: true
+        env:
+          APP_URL: ${{ env.APP_URL }}
         run: |
-          docker run --rm --network host \
-            -v "$PWD:/work" -w /work \
-            wapitiscanner/wapiti:latest \
-            -u ${{ env.APP_URL }} \
+          python3 -m pip install --quiet --user wapiti3
+          export PATH="$HOME/.local/bin:$PATH"
+          wapiti \
+            -u "$APP_URL" \
             -f html -o wapiti-report.html \
             --scope domain \
             --flush-attacks \
