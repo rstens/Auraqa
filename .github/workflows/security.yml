@@ -56,6 +56,11 @@ env:
   INTENSITY: ${{ inputs.intensity }}
   TARGET_BRANCH: ${{ inputs.target_branch }}
   APP_URL: http://localhost:3000
+  # Silence the "Node.js 20 deprecated" warnings emitted by older JS actions
+  # (gitleaks-action@v2, action-baseline@v0.14.0, nuclei-action@v3, etc.) by
+  # forcing them onto Node 24 — the runtime is already there, the actions
+  # just haven't bumped their `runs.using` declaration.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   # =========================================================================
@@ -113,20 +118,23 @@ jobs:
           "
 
       - name: OSV-Scanner — open-source vulnerability DB
-        # google/osv-scanner-action is a monorepo; the action lives in the
-        # osv-scanner-action subdirectory (sibling: osv-reporter-action).
-        uses: google/osv-scanner-action/osv-scanner-action@v2.3.8
+        # Run osv-scanner directly via its container so we control the output
+        # path. The official osv-scanner-action wrapper's --output flag
+        # writes inside the container's CWD, not the runner workspace, and
+        # the file disappears when the container exits.
         continue-on-error: true
-        with:
-          scan-args: |-
-            --recursive
-            --skip-git
-            --format=sarif
-            --output=osv-scanner.sarif
+        run: |
+          docker run --rm -v "$PWD:/src" -w /src \
+            ghcr.io/google/osv-scanner:v2.3.8 \
+            scan source \
+            --recursive \
+            --format=sarif \
+            --output=osv-scanner.sarif \
             ./
+          ls -la osv-scanner.sarif || echo "(SARIF not produced)"
 
       - name: Upload OSV-Scanner SARIF to Security tab
-        if: always()
+        if: always() && hashFiles('osv-scanner.sarif') != ''
         uses: github/codeql-action/upload-sarif@v3
         continue-on-error: true
         with:
@@ -146,7 +154,7 @@ jobs:
           exit-code: "0"
 
       - name: Upload Trivy FS SARIF
-        if: always()
+        if: always() && hashFiles('trivy-fs.sarif') != ''
         uses: github/codeql-action/upload-sarif@v3
         continue-on-error: true
         with:
@@ -157,22 +165,27 @@ jobs:
 
       - name: Semgrep — SAST
         if: inputs.intensity != 'smoke'
-        uses: semgrep/semgrep-action@v1
+        # The semgrep/semgrep-action@v1 wrapper is deprecated and its SARIF
+        # output never landed in the workspace. Run semgrep directly via its
+        # container so the SARIF goes exactly where we want.
         continue-on-error: true
-        with:
-          # Curated rulesets: p/security-audit (OWASP-aligned), p/nextjs,
-          # p/typescript, p/owasp-top-ten. Plus secrets for extra signal.
-          config: >-
-            p/security-audit
-            p/nextjs
-            p/typescript
-            p/owasp-top-ten
-            p/secrets
-        env:
-          SEMGREP_SARIF_OUTPUT: semgrep.sarif
+        run: |
+          docker run --rm -v "$PWD:/src" -w /src \
+            returntocorp/semgrep:latest \
+            semgrep scan \
+              --sarif --sarif-output=semgrep.sarif \
+              --config=p/security-audit \
+              --config=p/nextjs \
+              --config=p/typescript \
+              --config=p/owasp-top-ten \
+              --config=p/secrets \
+              --error \
+              --no-rewrite-rule-ids \
+              --exclude=node_modules --exclude=.next || true
+          ls -la semgrep.sarif || echo "(SARIF not produced)"
 
       - name: Upload Semgrep SARIF
-        if: inputs.intensity != 'smoke' && always()
+        if: inputs.intensity != 'smoke' && always() && hashFiles('semgrep.sarif') != ''
         uses: github/codeql-action/upload-sarif@v3
         continue-on-error: true
         with:
@@ -195,7 +208,7 @@ jobs:
           exit-code: "0"
 
       - name: Upload Trivy image SARIF
-        if: inputs.intensity != 'smoke' && always()
+        if: inputs.intensity != 'smoke' && always() && hashFiles('trivy-image.sarif') != ''
         uses: github/codeql-action/upload-sarif@v3
         continue-on-error: true
         with:
@@ -307,17 +320,28 @@ jobs:
         # Passive scan: crawls the app and inspects responses for issues
         # like missing headers, info disclosure, weak ciphers. Does NOT send
         # attack payloads — safe to run anywhere.
-        uses: zaproxy/action-baseline@v0.14.0
+        #
+        # IMPORTANT: do NOT override -J / -r filenames via cmd_options. The
+        # action's bundled artifact-upload step hardcodes the default
+        # filenames (report_json.json, report_html.html); overriding makes
+        # it error with "File ... does not exist". We rename later when
+        # uploading our own artifact.
+        uses: zaproxy/action-baseline@v0.15.0
         continue-on-error: true
         with:
           target: ${{ env.APP_URL }}
-          # Default rules-file lives in repo; cmd_options enables HTML+JSON.
-          cmd_options: "-J zap-baseline.json -r zap-baseline.html -a"
-          # Don't open an issue automatically — we surface in the summary.
-          issue_title: ""
           allow_issue_writing: false
-          # Fail action on warnings? No — captured to artifacts + summary.
           fail_action: false
+
+      - name: Capture ZAP baseline reports
+        if: always()
+        run: |
+          # action-baseline writes report_html.html / report_json.json /
+          # report_md.md to the workspace root. Copy to our preferred names
+          # so the artifact upload + summary block can find them.
+          [ -f report_html.html ] && cp report_html.html zap-baseline.html || true
+          [ -f report_json.json ] && cp report_json.json zap-baseline.json || true
+          ls -la zap-baseline.* || echo "(no ZAP baseline reports)"
 
       # -- Normal + Extreme --------------------------------------------------
 
@@ -325,13 +349,17 @@ jobs:
         if: inputs.intensity != 'smoke'
         # On normal we run high/critical templates only; on extreme we run
         # the full default ruleset including info-level findings.
-        uses: projectdiscovery/nuclei-action@main
+        # nuclei-action@v3 collapsed all flag inputs into a single `args:` —
+        # severity, output, and any other nuclei flags go there.
+        uses: projectdiscovery/nuclei-action@v3
         continue-on-error: true
         with:
-          target: ${{ env.APP_URL }}
-          severity: ${{ inputs.intensity == 'extreme' && 'unknown,info,low,medium,high,critical' || 'high,critical' }}
-          output: nuclei.json
-          flags: "-jsonl -stats -no-color"
+          args: |
+            -target ${{ env.APP_URL }}
+            -severity ${{ inputs.intensity == 'extreme' && 'unknown,info,low,medium,high,critical' || 'high,critical' }}
+            -jsonl-export nuclei.json
+            -stats
+            -no-color
 
       # -- Extreme only — DESTRUCTIVE ACTIVE SCANS ---------------------------
 
@@ -340,14 +368,20 @@ jobs:
         # Sends real attack payloads — SQLi, XSS, path traversal, command
         # injection, etc. WILL corrupt test data. Only safe against the
         # ephemeral Docker instance this workflow stands up.
-        uses: zaproxy/action-full-scan@v0.12.0
+        # Same default-filename rule as the baseline scan above — don't
+        # override -J / -r; rename in the capture step below.
+        uses: zaproxy/action-full-scan@v0.13.0
         continue-on-error: true
         with:
           target: ${{ env.APP_URL }}
-          cmd_options: "-J zap-full.json -r zap-full.html"
-          issue_title: ""
           allow_issue_writing: false
           fail_action: false
+
+      - name: Capture ZAP full-scan reports
+        if: inputs.intensity == 'extreme' && always()
+        run: |
+          [ -f report_html.html ] && cp report_html.html zap-full.html || true
+          [ -f report_json.json ] && cp report_json.json zap-full.json || true
 
       - name: Wapiti — DAST (active)
         if: inputs.intensity == 'extreme'
