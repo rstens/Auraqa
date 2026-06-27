@@ -149,6 +149,10 @@ jobs:
               failed=$(find test-results -mindepth 1 -maxdepth 1 -type d | wc -l)
               echo "Captured artifacts for **$failed** failed test(s) under \`test-results/\`."
             fi
+            echo ""
+            # Per-test list with counts — emits every run, even on success.
+            # Reads playwright-results.json produced by the json reporter.
+            python3 scripts/playwright-summary.py
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Stop Docker services
