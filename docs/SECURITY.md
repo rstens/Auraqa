@@ -67,6 +67,17 @@ way as CodeQL findings.
   SARIF uploads, dismissable and historical.
 - **Artifacts** — full HTML reports (ZAP / Wapiti) for in-depth review.
 
+## Auto-triage with Copilot
+
+After every `normal` or `extreme` run, the workflow files a GitHub issue
+containing a fixed triage prompt and assigns `@Copilot`. The Copilot
+coding agent picks the issue up, reads the run logs, applies fixes, and
+opens a PR against `dev`. The assignment is best-effort — if the coding
+agent isn't enabled for the repo the issue is still created and can be
+picked up manually.
+
+Smoke runs skip this step (pre-merge sanity check, low signal).
+
 ## Tuning
 
 Edit `.github/workflows/security.yml` to:
