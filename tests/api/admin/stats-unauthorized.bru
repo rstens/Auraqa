@@ -1,0 +1,29 @@
+meta {
+  name: Admin stats — negative (unauthenticated)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/admin/stats
+  body: none
+  auth: none
+}
+
+tests {
+  test("anonymous request is rejected", function() {
+    // Per CLAUDE.md, every /api/admin/* handler calls isAdmin() and must
+    // reject anonymous + non-admin callers. 401 (no session) is the
+    // expected response.
+    expect(res.getStatus()).to.be.oneOf([401, 403]);
+  });
+
+  test("body does not leak stats payload to anonymous callers", function() {
+    const body = res.getBody();
+    const hasStats =
+      body &&
+      typeof body === "object" &&
+      ("articles" in body || "users" in body || "threads" in body);
+    expect(hasStats).to.equal(false);
+  });
+}

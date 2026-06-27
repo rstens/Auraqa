@@ -1,0 +1,27 @@
+meta {
+  name: Search — boundary (10KB query string)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/search?q=aaaaaaaaaa
+  body: none
+  auth: none
+}
+
+script:pre-request {
+  // Build a 10_000-char query and substitute into the URL at runtime
+  // (Bruno's param table caps how much you can sensibly paste inline).
+  bru.setVar("bigQuery", "a".repeat(10_000));
+}
+
+params:query {
+  q: {{bigQuery}}
+}
+
+tests {
+  test("oversized query is rejected or handled, not 500", function() {
+    expect(res.getStatus()).to.be.oneOf([200, 400, 413, 414]);
+  });
+}

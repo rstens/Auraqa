@@ -1,0 +1,30 @@
+meta {
+  name: Search — positive
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/search?q=test
+  body: none
+  auth: none
+}
+
+params:query {
+  q: test
+}
+
+tests {
+  test("returns 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("body has the expected category buckets", function() {
+    const body = res.getBody();
+    expect(body).to.be.an("object");
+    // The search route should expose results per content type.
+    const hasBuckets =
+      "articles" in body || "threads" in body || "tools" in body || "results" in body;
+    expect(hasBuckets).to.equal(true);
+  });
+}

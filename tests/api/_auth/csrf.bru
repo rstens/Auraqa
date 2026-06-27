@@ -1,0 +1,35 @@
+meta {
+  name: Fetch CSRF token
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/auth/csrf
+  body: none
+  auth: none
+}
+
+script:post-response {
+  // Stash the token so login-admin.bru can reference it as {{csrfToken}}.
+  bru.setVar("csrfToken", res.getBody()?.csrfToken);
+}
+
+tests {
+  test("returns 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("body contains a csrfToken string", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("csrfToken");
+    expect(body.csrfToken).to.be.a("string");
+    expect(body.csrfToken.length).to.be.greaterThan(0);
+  });
+}
+
+docs {
+  Bootstraps the credentials login: NextAuth requires a CSRF token on the
+  callback POST. This request also sets the `next-auth.csrf-token` cookie
+  that subsequent login attempts need.
+}

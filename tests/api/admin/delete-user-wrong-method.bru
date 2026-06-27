@@ -1,0 +1,20 @@
+meta {
+  name: Admin user delete — boundary (wrong method)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/admin/users/00000000-0000-7000-8000-000000000000
+  body: none
+  auth: none
+}
+
+tests {
+  test("GET against a delete endpoint shape is handled (no 500)", function() {
+    // Whether the handler accepts GET (returning 401 because no auth) or
+    // rejects with 405, the point is that the wrong-method probe should
+    // not blow up. Anonymous → 401/403 most likely; 405 is also fine.
+    expect(res.getStatus()).to.be.oneOf([401, 403, 405]);
+  });
+}

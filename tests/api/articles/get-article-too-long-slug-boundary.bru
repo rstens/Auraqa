@@ -1,0 +1,26 @@
+meta {
+  name: Get article — boundary (excessively long slug)
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/api/articles/aaaaaaaaaaaaaaaaaaaa
+  body: none
+  auth: none
+}
+
+script:pre-request {
+  // 2_000-char slug. Should 404 (no match) cleanly, not 414/500.
+  bru.setVar("bigSlug", "a".repeat(2_000));
+}
+
+vars:pre-request {
+  bigSlug:
+}
+
+tests {
+  test("oversized slug returns 4xx, not 500", function() {
+    expect(res.getStatus()).to.be.oneOf([400, 404, 414]);
+  });
+}

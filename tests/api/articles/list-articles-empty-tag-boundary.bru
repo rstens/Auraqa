@@ -1,0 +1,31 @@
+meta {
+  name: List articles — boundary (empty tag param)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/articles?tag=
+  body: none
+  auth: none
+}
+
+params:query {
+  tag:
+}
+
+tests {
+  test("returns 200 for empty filter (treat as no filter)", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("body is still an array", function() {
+    expect(res.getBody()).to.be.an("array");
+  });
+}
+
+docs {
+  Boundary: `?tag=` (empty string) shouldn't 500. The handler must
+  either reject (400) or treat empty as "no filter" — both are acceptable.
+  Anything else (500, hang) is a regression.
+}

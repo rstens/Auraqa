@@ -1,0 +1,25 @@
+meta {
+  name: Cast vote — negative (unauthenticated)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/votes
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "targetType": "article",
+    "targetId": "00000000-0000-7000-8000-000000000000",
+    "value": 1
+  }
+}
+
+tests {
+  test("anonymous votes are rejected (401/403)", function() {
+    expect(res.getStatus()).to.be.oneOf([401, 403]);
+  });
+}

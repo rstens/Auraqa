@@ -1,0 +1,32 @@
+meta {
+  name: Search — boundary (SQLi-shaped input)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/search?q=%27%20OR%201%3D1--
+  body: none
+  auth: none
+}
+
+params:query {
+  q: ' OR 1=1--
+}
+
+tests {
+  test("classic SQLi probe does not return 500", function() {
+    expect(res.getStatus()).to.be.oneOf([200, 400]);
+  });
+
+  test("response body shape is unchanged (not a DB error dump)", function() {
+    const text = String(res.getBody() ?? "");
+    expect(text).to.not.match(/(syntax error|pg_|relation .* does not exist)/i);
+  });
+}
+
+docs {
+  Defense in depth: confirms the search route uses parameterised queries
+  (Drizzle handles this by construction). A 500 with a Postgres error
+  string would indicate raw concatenation somewhere.
+}

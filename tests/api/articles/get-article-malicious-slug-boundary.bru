@@ -1,0 +1,28 @@
+meta {
+  name: Get article — boundary (path traversal in slug)
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/articles/..%2F..%2Fetc%2Fpasswd
+  body: none
+  auth: none
+}
+
+tests {
+  test("path traversal returns 4xx, not the filesystem", function() {
+    expect(res.getStatus()).to.be.oneOf([400, 404]);
+  });
+
+  test("body does NOT contain /etc/passwd contents", function() {
+    const text = String(res.getBody() ?? "");
+    expect(text).to.not.match(/root:.*:0:0/);
+  });
+}
+
+docs {
+  Boundary + security: URL-encoded `../../etc/passwd` slug. Confirms the
+  route uses parameterised lookup, not filesystem access, and rejects
+  malformed input cleanly.
+}

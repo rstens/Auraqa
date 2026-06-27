@@ -1,0 +1,43 @@
+meta {
+  name: Login as admin (credentials)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/auth/callback/credentials
+  body: formUrlEncoded
+  auth: none
+}
+
+body:form-urlencoded {
+  username: {{adminUsername}}
+  password: {{adminPassword}}
+  csrfToken: {{csrfToken}}
+  callbackUrl: {{baseUrl}}/
+  json: true
+}
+
+tests {
+  test("response is 200 (json:true returns JSON instead of 302)", function() {
+    // With `json: true` in the form body, NextAuth returns
+    // { url: "..." } JSON instead of a 302 redirect — works without
+    // a fetch client that follows redirects.
+    expect(res.getStatus()).to.be.oneOf([200, 302]);
+  });
+
+  test("session cookie is set", function() {
+    const setCookies = res.getHeader("set-cookie") || [];
+    const cookies = Array.isArray(setCookies) ? setCookies.join("\n") : String(setCookies);
+    // Either `next-auth.session-token` (HTTP) or
+    // `__Secure-next-auth.session-token` (HTTPS) gets set on success.
+    expect(cookies).to.match(/next-auth\.session-token/);
+  });
+}
+
+docs {
+  Posts the credentials login. Requires the CSRF cookie set by the
+  preceding `Fetch CSRF token` request, plus the `csrfToken` env var (the
+  csrf.bru sibling stores it). Successful login sets a session cookie
+  Bruno re-uses on every subsequent authenticated call in this run.
+}

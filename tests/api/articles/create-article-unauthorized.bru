@@ -1,0 +1,35 @@
+meta {
+  name: Create article — negative (unauthenticated)
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/articles
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "title": "Anon attempt",
+    "slug": "anon-attempt",
+    "content": "# Hello"
+  }
+}
+
+tests {
+  test("anonymous POST is rejected (401/403)", function() {
+    expect(res.getStatus()).to.be.oneOf([401, 403]);
+  });
+
+  test("body explains the auth failure", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("error");
+  });
+}
+
+docs {
+  Critical security test: POST /api/articles MUST require auth. Anything
+  other than 401/403 is a regression of the moderation/auth wiring.
+}

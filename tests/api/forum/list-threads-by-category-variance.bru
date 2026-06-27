@@ -1,0 +1,29 @@
+meta {
+  name: List forum threads — variance (categoryId filter)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/forum/threads?categoryId=1
+  body: none
+  auth: none
+}
+
+params:query {
+  categoryId: 1
+}
+
+tests {
+  test("returns 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("all returned threads belong to the requested category", function() {
+    const body = res.getBody();
+    if (body.length === 0) return;
+    for (const t of body) {
+      expect(t.categoryId).to.equal(1);
+    }
+  });
+}

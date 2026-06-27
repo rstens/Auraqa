@@ -1,5 +1,37 @@
 import { describe, it, expect } from "vitest";
-import { slugify, truncate, timeAgo } from "../utils";
+import { cn, slugify, truncate, timeAgo } from "../utils";
+
+describe("cn", () => {
+  it("joins truthy class names", () => {
+    expect(cn("a", "b", "c")).toBe("a b c");
+  });
+
+  it("ignores falsy values", () => {
+    expect(cn("a", false, null, undefined, "", "b")).toBe("a b");
+  });
+
+  it("respects clsx conditional object syntax", () => {
+    expect(cn("base", { active: true, disabled: false })).toBe("base active");
+  });
+
+  it("flattens nested arrays", () => {
+    expect(cn(["a", ["b", "c"]], "d")).toBe("a b c d");
+  });
+
+  it("resolves Tailwind conflicts via tailwind-merge", () => {
+    // tailwind-merge keeps the last conflicting class only
+    expect(cn("p-2", "p-4")).toBe("p-4");
+    expect(cn("text-sm", "text-lg")).toBe("text-lg");
+  });
+
+  it("preserves non-conflicting Tailwind classes", () => {
+    expect(cn("p-2", "m-2", "bg-red-500")).toBe("p-2 m-2 bg-red-500");
+  });
+
+  it("returns an empty string for no inputs", () => {
+    expect(cn()).toBe("");
+  });
+});
 
 describe("slugify", () => {
   it("converts a title to a URL-safe slug", () => {

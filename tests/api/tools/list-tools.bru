@@ -1,0 +1,30 @@
+meta {
+  name: List tools — positive
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/tools
+  body: none
+  auth: none
+}
+
+tests {
+  test("returns 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("body is an array", function() {
+    expect(res.getBody()).to.be.an("array");
+  });
+
+  test("only approved tools are visible to anonymous callers", function() {
+    const body = res.getBody();
+    if (body.length === 0) return;
+    // Pending/rejected submissions must never leak through this endpoint.
+    for (const t of body) {
+      expect(t.status === undefined || t.status === "approved").to.equal(true);
+    }
+  });
+}

@@ -1,0 +1,27 @@
+meta {
+  name: Create article — boundary (malformed JSON)
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/articles
+  body: text
+  auth: none
+}
+
+headers {
+  content-type: application/json
+}
+
+body:text {
+  { this is not valid json
+}
+
+tests {
+  test("malformed JSON is rejected with 400/401, not 500", function() {
+    // 401 is acceptable (auth check runs before body parse) — the point
+    // is that a syntactically broken body doesn't crash the handler.
+    expect(res.getStatus()).to.be.oneOf([400, 401, 403]);
+  });
+}
