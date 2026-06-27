@@ -107,7 +107,9 @@ jobs:
           "
 
       - name: OSV-Scanner — open-source vulnerability DB
-        uses: google/osv-scanner-action@v2.3.8
+        # google/osv-scanner-action is a monorepo; the action lives in the
+        # osv-scanner-action subdirectory (sibling: osv-reporter-action).
+        uses: google/osv-scanner-action/osv-scanner-action@v2.3.8
         continue-on-error: true
         with:
           scan-args: |-
