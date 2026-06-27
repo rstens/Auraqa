@@ -335,6 +335,31 @@ describe("updateProfileSchema", () => {
   it("rejects empty name", () => {
     expect(updateProfileSchema.safeParse({ name: "" }).success).toBe(false);
   });
+
+  it("accepts a valid username", () => {
+    expect(
+      updateProfileSchema.safeParse({ username: "alice_42" }).success
+    ).toBe(true);
+  });
+
+  it("rejects empty username", () => {
+    expect(updateProfileSchema.safeParse({ username: "" }).success).toBe(false);
+  });
+
+  it("rejects username over 50 chars", () => {
+    expect(
+      updateProfileSchema.safeParse({ username: "a".repeat(51) }).success
+    ).toBe(false);
+  });
+
+  it("accepts all three fields together", () => {
+    const result = updateProfileSchema.safeParse({
+      name: "Alice",
+      username: "alice",
+      bio: "Hi",
+    });
+    expect(result.success).toBe(true);
+  });
 });
 
 describe("glossaryTermSchema", () => {
