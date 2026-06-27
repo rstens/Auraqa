@@ -106,7 +106,7 @@ src/
 ```bash
 npm run dev          # Start dev server with Turbopack
 npm run build        # Production build
-npm run start        # Run the production build locally
+npm run start        # Run the production build locally (run `npm run build` first)
 npm run format       # Format code with Prettier
 npm run format:check # Check formatting (used in CI)
 npm run lint         # Run ESLint
