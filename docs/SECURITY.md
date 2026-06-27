@@ -178,14 +178,14 @@ The following ZAP baseline alerts are expected and not actionable:
 Nuclei (extreme intensity, all severities) reports the following info-level
 matches. None represent a real vulnerability.
 
-| Template ID                                         | Severity | Disposition                                                            |
-| --------------------------------------------------- | -------- | ---------------------------------------------------------------------- |
-| `dameng-detect`                                     | info     | False-positive JS protocol probe on port 3000; no DM database present. |
-| `snmpv3-detect`                                     | info     | False-positive JS protocol probe on port 3000; no SNMP agent present.  |
-| `weak-csp-detect:unsafe-script-src`                 | info     | Same as ZAP [10055] — `'unsafe-inline'` tracked as future work above.  |
-| `http-missing-security-headers:strict-transport-security` | info | Fixed — HSTS header now shipped in `next.config.ts`.                   |
-| `robots-txt`                                        | info     | `robots.txt` exists and is intentional (Next.js default).              |
-| `options-method`                                    | info     | Next.js responds to OPTIONS with allowed methods; expected behaviour.  |
+| Template ID                                               | Severity | Disposition                                                            |
+| --------------------------------------------------------- | -------- | ---------------------------------------------------------------------- |
+| `dameng-detect`                                           | info     | False-positive JS protocol probe on port 3000; no DM database present. |
+| `snmpv3-detect`                                           | info     | False-positive JS protocol probe on port 3000; no SNMP agent present.  |
+| `weak-csp-detect:unsafe-script-src`                       | info     | Same as ZAP [10055] — `'unsafe-inline'` tracked as future work above.  |
+| `http-missing-security-headers:strict-transport-security` | info     | Fixed — HSTS header now shipped in `next.config.ts`.                   |
+| `robots-txt`                                              | info     | `robots.txt` exists and is intentional (Next.js default).              |
+| `options-method`                                          | info     | Next.js responds to OPTIONS with allowed methods; expected behaviour.  |
 
 ## Accepted Wapiti findings (dev-environment only)
 
@@ -193,9 +193,9 @@ Wapiti runs against the ephemeral Docker instance on `http://localhost:3000`
 (plain HTTP). The following findings are inherent to the CI test rig and do
 not apply to a production deployment behind TLS.
 
-| Finding                                             | Disposition                                                        |
-| --------------------------------------------------- | ------------------------------------------------------------------ |
-| CSP `script-src` value is not safe                  | Same as ZAP [10055] — `'unsafe-inline'` tracked as future work.    |
-| Host serves HTTP without redirect to HTTPS          | CI Docker runs plain HTTP; production is behind a TLS terminator.  |
-| Sensitive data sent over unencrypted HTTP connection | Same root cause — CI is HTTP-only by design.                       |
-| `sitemap.xml` found (nikto module)                  | Informational — `sitemap.xml` is desirable for SEO.                |
+| Finding                                              | Disposition                                                       |
+| ---------------------------------------------------- | ----------------------------------------------------------------- |
+| CSP `script-src` value is not safe                   | Same as ZAP [10055] — `'unsafe-inline'` tracked as future work.   |
+| Host serves HTTP without redirect to HTTPS           | CI Docker runs plain HTTP; production is behind a TLS terminator. |
+| Sensitive data sent over unencrypted HTTP connection | Same root cause — CI is HTTP-only by design.                      |
+| `sitemap.xml` found (nikto module)                   | Informational — `sitemap.xml` is desirable for SEO.               |
