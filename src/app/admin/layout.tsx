@@ -2,11 +2,7 @@ import { isAdmin } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 
-export default async function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const admin = await isAdmin();
   if (!admin) redirect("/login");
 

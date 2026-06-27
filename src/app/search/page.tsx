@@ -82,7 +82,12 @@ function SearchContent() {
 
       <div data-testid="search-results" className="mt-8">
         {loading ? (
-          <p data-testid="search-loading" className="text-center text-slate-500 dark:text-slate-400">Searching...</p>
+          <p
+            data-testid="search-loading"
+            className="text-center text-slate-500 dark:text-slate-400"
+          >
+            Searching...
+          </p>
         ) : results.length === 0 && searched ? (
           <p data-testid="search-empty" className="text-center text-slate-500 dark:text-slate-400">
             No results found for &ldquo;{initialQuery}&rdquo;
@@ -100,9 +105,7 @@ function SearchContent() {
                   <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-700 dark:text-slate-400">
                     {typeLabels[result.type] ?? result.type}
                   </span>
-                  <h2 className="font-medium text-slate-900 dark:text-white">
-                    {result.title}
-                  </h2>
+                  <h2 className="font-medium text-slate-900 dark:text-white">{result.title}</h2>
                 </div>
                 {result.excerpt && (
                   <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
@@ -120,12 +123,14 @@ function SearchContent() {
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Search</h1>
-        <p className="mt-6 text-center text-slate-500 dark:text-slate-400">Loading...</p>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Search</h1>
+          <p className="mt-6 text-center text-slate-500 dark:text-slate-400">Loading...</p>
+        </div>
+      }
+    >
       <SearchContent />
     </Suspense>
   );

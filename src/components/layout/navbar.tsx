@@ -10,7 +10,10 @@ import { UserMenu } from "./user-menu";
 
 export function Navbar() {
   return (
-    <header data-testid="navbar" className="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/80">
+    <header
+      data-testid="navbar"
+      className="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/80"
+    >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link
@@ -63,7 +66,11 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
 function SearchIcon() {
   return (
     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+      />
     </svg>
   );
 }
@@ -72,11 +79,24 @@ function MobileMenuButton() {
   return (
     <details className="relative md:hidden">
       <summary className="list-none rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800">
-        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+        <svg
+          className="h-6 w-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+          />
         </svg>
       </summary>
-      <nav data-testid="mobile-nav" className="absolute right-0 mt-2 w-48 rounded-lg border border-slate-200 bg-white py-2 shadow-lg dark:border-slate-700 dark:bg-slate-800">
+      <nav
+        data-testid="mobile-nav"
+        className="absolute right-0 mt-2 w-48 rounded-lg border border-slate-200 bg-white py-2 shadow-lg dark:border-slate-700 dark:bg-slate-800"
+      >
         <MobileNavLink href="/articles">Articles</MobileNavLink>
         <MobileNavLink href="/forum">Forum</MobileNavLink>
         <MobileNavLink href="/tools">Tools</MobileNavLink>

@@ -15,7 +15,7 @@ import { generateId } from "@/lib/uuid";
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
+  { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
 
@@ -40,7 +40,7 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
+  { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
   const session = await auth();
@@ -63,7 +63,7 @@ export async function POST(
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Validation failed", details: parsed.error.flatten() },
-      { status: 400 }
+      { status: 400 },
     );
   }
 

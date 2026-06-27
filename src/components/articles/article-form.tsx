@@ -41,9 +41,7 @@ export function ArticleForm({
     };
 
     try {
-      const url = isEdit
-        ? `/api/articles/${initialData!.slug}`
-        : "/api/articles";
+      const url = isEdit ? `/api/articles/${initialData!.slug}` : "/api/articles";
       const method = isEdit ? "PUT" : "POST";
 
       const res = await fetch(url, {
@@ -55,7 +53,9 @@ export function ArticleForm({
       if (!res.ok) {
         const text = await res.text();
         let message = "Failed to save article";
-        try { message = JSON.parse(text).error ?? message; } catch {}
+        try {
+          message = JSON.parse(text).error ?? message;
+        } catch {}
         throw new Error(message);
       }
 
@@ -72,13 +72,19 @@ export function ArticleForm({
   return (
     <form data-testid="article-form" onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div data-testid="article-form-error" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+        <div
+          data-testid="article-form-error"
+          className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400"
+        >
           {error}
         </div>
       )}
 
       <div>
-        <label htmlFor="title" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label
+          htmlFor="title"
+          className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+        >
           Title
         </label>
         <input
@@ -93,7 +99,10 @@ export function ArticleForm({
       </div>
 
       <div>
-        <label htmlFor="summary" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label
+          htmlFor="summary"
+          className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+        >
           Summary (optional)
         </label>
         <input
@@ -107,7 +116,10 @@ export function ArticleForm({
       </div>
 
       <div>
-        <label htmlFor="content" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label
+          htmlFor="content"
+          className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+        >
           Content (Markdown)
         </label>
         <textarea

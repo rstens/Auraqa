@@ -9,9 +9,7 @@ export default async function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950">
       <div className="w-full max-w-sm space-y-8 rounded-xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-800">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Sign in to AuraQA
-          </h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Sign in to AuraQA</h1>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
             Join the software testing community
           </p>
@@ -52,7 +50,6 @@ export default async function LoginPage() {
               >
                 Sign in
               </button>
-
             </div>
           </form>
 
@@ -81,7 +78,9 @@ export default async function LoginPage() {
               <div className="w-full border-t border-slate-300 dark:border-slate-600" />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="bg-white px-2 text-slate-500 dark:bg-slate-800 dark:text-slate-400">or</span>
+              <span className="bg-white px-2 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                or
+              </span>
             </div>
           </div>
 

@@ -9,7 +9,7 @@ import { generateId } from "@/lib/uuid";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
+  { params }: { params: Promise<{ slug: string }> },
 ) {
   if (!(await isAdmin())) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -38,7 +38,10 @@ export async function POST(
       return NextResponse.json({ error: "AI summarization failed" }, { status: 502 });
     }
 
-    await db.update(articles).set({ aiSummary: summary, updatedAt: new Date() }).where(eq(articles.slug, slug));
+    await db
+      .update(articles)
+      .set({ aiSummary: summary, updatedAt: new Date() })
+      .where(eq(articles.slug, slug));
 
     await db.insert(aiInteractions).values({
       id: generateId(),
@@ -65,10 +68,13 @@ export async function POST(
     for (const tagName of suggested) {
       const match = allTags.find((t) => t.name.toLowerCase() === tagName.toLowerCase());
       if (match) {
-        await db.insert(articleTags).values({
-          articleId: article.id,
-          tagId: match.id,
-        }).onConflictDoNothing();
+        await db
+          .insert(articleTags)
+          .values({
+            articleId: article.id,
+            tagId: match.id,
+          })
+          .onConflictDoNothing();
       }
     }
 

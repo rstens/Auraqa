@@ -19,28 +19,35 @@ function GlossaryContent({ terms }: { terms: GlossaryTermData[] }) {
   const router = useRouter();
 
   const initialQuery = searchParams.get("q") ?? "";
-  const initialCategories = searchParams.get("category")?.split(",").filter(Boolean) as GlossaryCategory[] ?? [];
+  const initialCategories =
+    (searchParams.get("category")?.split(",").filter(Boolean) as GlossaryCategory[]) ?? [];
   const initialAcronyms = searchParams.get("acronyms") === "1";
 
   const [query, setQuery] = useState(initialQuery);
-  const [activeCategories, setActiveCategories] = useState<Set<GlossaryCategory>>(new Set(initialCategories));
+  const [activeCategories, setActiveCategories] = useState<Set<GlossaryCategory>>(
+    new Set(initialCategories),
+  );
   const [acronymsOnly, setAcronymsOnly] = useState(initialAcronyms);
   const [expandedTermId, setExpandedTermId] = useState<string | null>(null);
 
   const deferredQuery = useDeferredValue(query);
 
-  const syncUrl = useCallback((q: string, cats: Set<GlossaryCategory>, acronyms: boolean) => {
-    const params = new URLSearchParams();
-    if (q) params.set("q", q);
-    if (cats.size > 0) params.set("category", [...cats].join(","));
-    if (acronyms) params.set("acronyms", "1");
-    const qs = params.toString();
-    router.replace(qs ? `/glossary?${qs}` : "/glossary", { scroll: false });
-  }, [router]);
+  const syncUrl = useCallback(
+    (q: string, cats: Set<GlossaryCategory>, acronyms: boolean) => {
+      const params = new URLSearchParams();
+      if (q) params.set("q", q);
+      if (cats.size > 0) params.set("category", [...cats].join(","));
+      if (acronyms) params.set("acronyms", "1");
+      const qs = params.toString();
+      router.replace(qs ? `/glossary?${qs}` : "/glossary", { scroll: false });
+    },
+    [router],
+  );
 
   function toggleCategory(cat: GlossaryCategory) {
     const next = new Set(activeCategories);
-    if (next.has(cat)) next.delete(cat); else next.add(cat);
+    if (next.has(cat)) next.delete(cat);
+    else next.add(cat);
     setActiveCategories(next);
     syncUrl(query, next, acronymsOnly);
   }
@@ -87,10 +94,11 @@ function GlossaryContent({ terms }: { terms: GlossaryTermData[] }) {
     }
     if (deferredQuery.trim()) {
       const q = deferredQuery.trim().toLowerCase();
-      result = result.filter((t) =>
-        t.term.toLowerCase().includes(q) ||
-        (t.abbreviation && t.abbreviation.toLowerCase().includes(q)) ||
-        t.definition.toLowerCase().includes(q)
+      result = result.filter(
+        (t) =>
+          t.term.toLowerCase().includes(q) ||
+          (t.abbreviation && t.abbreviation.toLowerCase().includes(q)) ||
+          t.definition.toLowerCase().includes(q),
       );
     }
     return result;
@@ -120,11 +128,14 @@ function GlossaryContent({ terms }: { terms: GlossaryTermData[] }) {
         <button
           key={`${match.index}-${targetId}`}
           data-testid={`glossary-crossref-${targetId}`}
-          onClick={(e) => { e.stopPropagation(); scrollToTerm(targetId); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            scrollToTerm(targetId);
+          }}
           className="text-blue-600 underline decoration-blue-300 hover:decoration-blue-600 dark:text-blue-400 dark:decoration-blue-700 dark:hover:decoration-blue-400"
         >
           {match[1]}
-        </button>
+        </button>,
       );
       lastIndex = match.index + match[0].length;
     }
@@ -138,7 +149,8 @@ function GlossaryContent({ terms }: { terms: GlossaryTermData[] }) {
     <div data-testid="glossary-page" className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
       <h1 className="text-3xl font-bold text-slate-900 dark:text-white">ISTQB Glossary</h1>
       <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-        Industry-standard testing terminology from the International Software Testing Qualifications Board
+        Industry-standard testing terminology from the International Software Testing Qualifications
+        Board
       </p>
 
       <div className="mt-6">
@@ -163,7 +175,10 @@ function GlossaryContent({ terms }: { terms: GlossaryTermData[] }) {
         </div>
       </div>
 
-      <div data-testid="glossary-category-filters" className="mt-4 flex flex-wrap items-center gap-2">
+      <div
+        data-testid="glossary-category-filters"
+        className="mt-4 flex flex-wrap items-center gap-2"
+      >
         {CATEGORIES.map((cat) => {
           const isActive = activeCategories.has(cat.id);
           return (
@@ -195,13 +210,19 @@ function GlossaryContent({ terms }: { terms: GlossaryTermData[] }) {
         </button>
       </div>
 
-      <p data-testid="glossary-match-count" className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+      <p
+        data-testid="glossary-match-count"
+        className="mt-4 text-sm text-slate-500 dark:text-slate-400"
+      >
         Showing {filteredTerms.length} of {terms.length} terms
       </p>
 
       <div data-testid="glossary-terms-list" className="mt-6 space-y-3">
         {filteredTerms.length === 0 ? (
-          <p data-testid="glossary-empty" className="py-12 text-center text-slate-500 dark:text-slate-400">
+          <p
+            data-testid="glossary-empty"
+            className="py-12 text-center text-slate-500 dark:text-slate-400"
+          >
             No terms match your search.
           </p>
         ) : (
@@ -224,20 +245,33 @@ function GlossaryContent({ terms }: { terms: GlossaryTermData[] }) {
                   className="flex w-full items-start justify-between text-left"
                 >
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{term.term}</h2>
+                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                      {term.term}
+                    </h2>
                     {term.abbreviation && (
-                      <span data-testid={`glossary-term-abbr-${term.id}`} className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-700 dark:text-slate-400">
+                      <span
+                        data-testid={`glossary-term-abbr-${term.id}`}
+                        className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-700 dark:text-slate-400"
+                      >
                         {term.abbreviation}
                       </span>
                     )}
-                    <span data-testid={`glossary-term-category-${term.id}`} className={`rounded px-2 py-0.5 text-xs font-medium ${catInfo.badgeClasses}`}>
+                    <span
+                      data-testid={`glossary-term-category-${term.id}`}
+                      className={`rounded px-2 py-0.5 text-xs font-medium ${catInfo.badgeClasses}`}
+                    >
                       {catInfo.label}
                     </span>
                   </div>
-                  <span className="ml-4 mt-1 shrink-0 text-slate-400">{isExpanded ? "▲" : "▼"}</span>
+                  <span className="ml-4 mt-1 shrink-0 text-slate-400">
+                    {isExpanded ? "▲" : "▼"}
+                  </span>
                 </button>
 
-                <div data-testid={`glossary-term-definition-${term.id}`} className="mt-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+                <div
+                  data-testid={`glossary-term-definition-${term.id}`}
+                  className="mt-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300"
+                >
                   {renderDefinitionWithLinks(term.definition, term.id)}
                 </div>
 
@@ -245,7 +279,9 @@ function GlossaryContent({ terms }: { terms: GlossaryTermData[] }) {
                   <div className="mt-4 space-y-3 border-t border-slate-200 pt-4 dark:border-slate-700">
                     {term.relatedTerms.length > 0 && (
                       <div data-testid={`glossary-related-${term.id}`}>
-                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Related Terms</p>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                          Related Terms
+                        </p>
                         <div className="mt-2 flex flex-wrap gap-2">
                           {term.relatedTerms.map((relId) => {
                             const rel = terms.find((t) => t.id === relId);
@@ -259,7 +295,9 @@ function GlossaryContent({ terms }: { terms: GlossaryTermData[] }) {
                                 className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-colors hover:opacity-80 ${relCat.badgeClasses}`}
                               >
                                 {rel.term}
-                                {rel.abbreviation && <span className="opacity-60">({rel.abbreviation})</span>}
+                                {rel.abbreviation && (
+                                  <span className="opacity-60">({rel.abbreviation})</span>
+                                )}
                               </button>
                             );
                           })}
@@ -268,7 +306,9 @@ function GlossaryContent({ terms }: { terms: GlossaryTermData[] }) {
                     )}
                     {term.seeAlso.length > 0 && (
                       <div data-testid={`glossary-seealso-${term.id}`}>
-                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">See Also</p>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                          See Also
+                        </p>
                         <div className="mt-2 flex flex-wrap gap-2">
                           {term.seeAlso.map((seeId) => {
                             const see = terms.find((t) => t.id === seeId);
@@ -299,12 +339,14 @@ function GlossaryContent({ terms }: { terms: GlossaryTermData[] }) {
 
 export function GlossaryClient({ terms }: { terms: GlossaryTermData[] }) {
   return (
-    <Suspense fallback={
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">ISTQB Glossary</h1>
-        <p className="mt-6 text-center text-slate-500 dark:text-slate-400">Loading...</p>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">ISTQB Glossary</h1>
+          <p className="mt-6 text-center text-slate-500 dark:text-slate-400">Loading...</p>
+        </div>
+      }
+    >
       <GlossaryContent terms={terms} />
     </Suspense>
   );

@@ -24,7 +24,9 @@ export function ArticleActions({ slug, currentStatus }: { slug: string; currentS
       if (!res.ok) {
         const text = await res.text();
         let msg = "Action failed";
-        try { msg = JSON.parse(text).error ?? msg; } catch {}
+        try {
+          msg = JSON.parse(text).error ?? msg;
+        } catch {}
         throw new Error(msg);
       }
       if (action === "delete") {
@@ -46,7 +48,10 @@ export function ArticleActions({ slug, currentStatus }: { slug: string; currentS
   return (
     <div data-testid="article-actions" className="space-y-4">
       {error && (
-        <div data-testid="article-actions-error" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+        <div
+          data-testid="article-actions-error"
+          className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400"
+        >
           {error}
         </div>
       )}
@@ -105,11 +110,17 @@ export function ArticleActions({ slug, currentStatus }: { slug: string; currentS
       </div>
 
       {suggestedTags && (
-        <div data-testid="ai-tags-result" className="rounded-lg border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-800 dark:bg-indigo-900/20">
+        <div
+          data-testid="ai-tags-result"
+          className="rounded-lg border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-800 dark:bg-indigo-900/20"
+        >
           <p className="text-xs font-medium text-indigo-700 dark:text-indigo-400">Suggested Tags</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {suggestedTags.map((tag) => (
-              <span key={tag} className="rounded bg-indigo-100 px-2 py-1 text-xs font-medium text-indigo-800 dark:bg-indigo-800 dark:text-indigo-200">
+              <span
+                key={tag}
+                className="rounded bg-indigo-100 px-2 py-1 text-xs font-medium text-indigo-800 dark:bg-indigo-800 dark:text-indigo-200"
+              >
                 {tag}
               </span>
             ))}

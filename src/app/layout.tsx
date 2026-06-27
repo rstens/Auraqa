@@ -25,7 +25,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "AuraQA — Community Platform for Software Testers",
-  description: "Knowledge articles, community forums, and testing tools directory for the software testing community. Powered by Claude AI.",
+  description:
+    "Knowledge articles, community forums, and testing tools directory for the software testing community. Powered by Claude AI.",
 };
 
 export default function RootLayout({
@@ -34,14 +35,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-white dark:bg-slate-950">
         <AuthProvider>
           <Navbar />
-          <main data-testid="main-content" className="flex-1">{children}</main>
+          <main data-testid="main-content" className="flex-1">
+            {children}
+          </main>
           <Footer />
         </AuthProvider>
       </body>

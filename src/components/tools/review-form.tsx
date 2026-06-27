@@ -38,7 +38,9 @@ export function ReviewForm({ toolSlug }: { toolSlug: string }) {
       if (!res.ok) {
         const text = await res.text();
         let message = "Failed to submit review";
-        try { message = JSON.parse(text).error ?? message; } catch {}
+        try {
+          message = JSON.parse(text).error ?? message;
+        } catch {}
         throw new Error(message);
       }
 
@@ -55,13 +57,18 @@ export function ReviewForm({ toolSlug }: { toolSlug: string }) {
   return (
     <form data-testid="review-form" onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div data-testid="review-form-error" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+        <div
+          data-testid="review-form-error"
+          className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400"
+        >
           {error}
         </div>
       )}
 
       <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Rating</label>
+        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+          Rating
+        </label>
         <div className="mt-1 flex gap-1">
           {[1, 2, 3, 4, 5].map((star) => (
             <button
@@ -80,16 +87,43 @@ export function ReviewForm({ toolSlug }: { toolSlug: string }) {
       </div>
 
       <div>
-        <label htmlFor="title" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Title (optional)</label>
-        <input id="title" name="title" type="text" className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+        <label
+          htmlFor="title"
+          className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+        >
+          Title (optional)
+        </label>
+        <input
+          id="title"
+          name="title"
+          type="text"
+          className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+        />
       </div>
 
       <div>
-        <label htmlFor="content" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Review</label>
-        <textarea id="content" name="content" required rows={4} className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white" placeholder="Share your experience with this tool..." />
+        <label
+          htmlFor="content"
+          className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+        >
+          Review
+        </label>
+        <textarea
+          id="content"
+          name="content"
+          required
+          rows={4}
+          className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+          placeholder="Share your experience with this tool..."
+        />
       </div>
 
-      <button data-testid="review-submit-button" type="submit" disabled={loading} className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50">
+      <button
+        data-testid="review-submit-button"
+        type="submit"
+        disabled={loading}
+        className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+      >
         {loading ? "Submitting..." : "Submit Review"}
       </button>
     </form>

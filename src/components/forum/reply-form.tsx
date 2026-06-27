@@ -33,7 +33,9 @@ export function ReplyForm({ threadId }: { threadId: string }) {
       if (!res.ok) {
         const text = await res.text();
         let message = "Failed to post reply";
-        try { message = JSON.parse(text).error ?? message; } catch {}
+        try {
+          message = JSON.parse(text).error ?? message;
+        } catch {}
         throw new Error(message);
       }
 
@@ -49,7 +51,10 @@ export function ReplyForm({ threadId }: { threadId: string }) {
   return (
     <form data-testid="reply-form" onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div data-testid="reply-form-error" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+        <div
+          data-testid="reply-form-error"
+          className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400"
+        >
           {error}
         </div>
       )}

@@ -16,7 +16,7 @@
 export async function postJson<T = unknown>(
   url: string,
   body: unknown,
-  init?: RequestInit
+  init?: RequestInit,
 ): Promise<T> {
   const res = await fetch(url, {
     method: "POST",

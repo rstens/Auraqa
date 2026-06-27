@@ -29,7 +29,10 @@ export function UserMenu() {
 
   if (status === "loading") {
     return (
-      <div data-testid="user-menu-loading" className="h-8 w-8 animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
+      <div
+        data-testid="user-menu-loading"
+        className="h-8 w-8 animate-pulse rounded-full bg-slate-200 dark:bg-slate-700"
+      />
     );
   }
 
@@ -56,14 +59,15 @@ export function UserMenu() {
       </button>
 
       {open && (
-        <div data-testid="user-menu-dropdown" className="absolute right-0 mt-2 w-48 rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
+        <div
+          data-testid="user-menu-dropdown"
+          className="absolute right-0 mt-2 w-48 rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800"
+        >
           <div className="border-b border-slate-200 px-4 py-2 dark:border-slate-700">
             <p className="text-sm font-medium text-slate-900 dark:text-white">
               {session.user.name}
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {session.user.email}
-            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{session.user.email}</p>
           </div>
           <Link
             href={`/profile/${(session.user as unknown as Record<string, unknown>).username ?? session.user.name}`}

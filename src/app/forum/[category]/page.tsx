@@ -13,11 +13,7 @@ import { timeAgo } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export default async function CategoryPage({
-  params,
-}: {
-  params: Promise<{ category: string }>;
-}) {
+export default async function CategoryPage({ params }: { params: Promise<{ category: string }> }) {
   const { category: categorySlug } = await params;
 
   const categoryResult = await db
@@ -45,22 +41,25 @@ export default async function CategoryPage({
     .from(forumThreads)
     .leftJoin(users, eq(forumThreads.authorId, users.id))
     .where(eq(forumThreads.categoryId, cat.id))
-    .orderBy(desc(forumThreads.isPinned), desc(forumThreads.lastReplyAt), desc(forumThreads.createdAt))
+    .orderBy(
+      desc(forumThreads.isPinned),
+      desc(forumThreads.lastReplyAt),
+      desc(forumThreads.createdAt),
+    )
     .limit(50);
 
   return (
     <div data-testid="forum-category-page" className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex items-center justify-between">
         <div>
-          <Link href="/forum" className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400">
+          <Link
+            href="/forum"
+            className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400"
+          >
             &larr; All categories
           </Link>
-          <h1 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
-            {cat.name}
-          </h1>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            {cat.description}
-          </p>
+          <h1 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{cat.name}</h1>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{cat.description}</p>
         </div>
         <Link
           href={`/forum/${categorySlug}/new`}
@@ -73,7 +72,10 @@ export default async function CategoryPage({
 
       <div data-testid="threads-list" className="mt-8 space-y-2">
         {threads.length === 0 ? (
-          <p data-testid="threads-empty" className="py-12 text-center text-slate-500 dark:text-slate-400">
+          <p
+            data-testid="threads-empty"
+            className="py-12 text-center text-slate-500 dark:text-slate-400"
+          >
             No threads yet. Start a discussion!
           </p>
         ) : (
@@ -90,9 +92,7 @@ export default async function CategoryPage({
                 </span>
               )}
               <div className="flex-1">
-                <h2 className="font-medium text-slate-900 dark:text-white">
-                  {thread.title}
-                </h2>
+                <h2 className="font-medium text-slate-900 dark:text-white">{thread.title}</h2>
                 <div className="mt-1 flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
                   <span>{thread.authorName ?? thread.authorUsername ?? "Anonymous"}</span>
                   <span>{timeAgo(thread.lastReplyAt ?? thread.createdAt)}</span>

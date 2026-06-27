@@ -27,6 +27,7 @@
 ## Commit Messages
 
 Use clear, descriptive commit messages:
+
 - `feat: add article tag filtering`
 - `fix: prevent duplicate votes on same target`
 - `docs: update API reference with search endpoint`
@@ -34,6 +35,7 @@ Use clear, descriptive commit messages:
 ## Reporting Issues
 
 Open an issue on GitHub with:
+
 - A clear description of the problem
 - Steps to reproduce
 - Expected vs actual behavior

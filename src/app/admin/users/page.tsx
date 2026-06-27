@@ -28,7 +28,12 @@ export default async function AdminUsersPage() {
 
       <div data-testid="admin-users-list" className="mt-6 space-y-2">
         {userList.length === 0 ? (
-          <p data-testid="admin-users-empty" className="py-12 text-center text-slate-500 dark:text-slate-400">No users found.</p>
+          <p
+            data-testid="admin-users-empty"
+            className="py-12 text-center text-slate-500 dark:text-slate-400"
+          >
+            No users found.
+          </p>
         ) : (
           userList.map((user) => (
             <Link
@@ -49,7 +54,8 @@ export default async function AdminUsersPage() {
                     <RoleBadge role={user.role} />
                   </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">
-                    {user.email} &middot; rep {user.reputation} &middot; joined {timeAgo(user.createdAt)}
+                    {user.email} &middot; rep {user.reputation} &middot; joined{" "}
+                    {timeAgo(user.createdAt)}
                   </div>
                 </div>
               </div>
@@ -62,8 +68,9 @@ export default async function AdminUsersPage() {
 }
 
 function RoleBadge({ role }: { role: string }) {
-  const styles = role === "admin"
-    ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400"
-    : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400";
+  const styles =
+    role === "admin"
+      ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400"
+      : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400";
   return <span className={`rounded px-2 py-0.5 text-xs font-medium ${styles}`}>{role}</span>;
 }

@@ -39,23 +39,27 @@ e2e/                       # Playwright E2E tests
 ## What to Test
 
 ### Unit Tests
+
 - Utility functions (slugify, timeAgo, UUID generation)
 - Markdown rendering and excerpt extraction
 - Zod validation schemas
 - AI service functions (with mocked Anthropic client)
 
 ### Component Tests
+
 - ArticleCard, ThreadCard, ToolCard rendering
 - VoteButtons interaction
 - SearchBar input handling
 
 ### Integration Tests
+
 - API route handlers (CRUD operations)
 - Authentication middleware
 - Vote deduplication
 - Search query execution
 
 ### E2E Tests (Phase 2+)
+
 - Full user flows: register → create article → search → vote
 - Forum Q&A flow: ask question → post reply → accept answer
 - Tool submission and review flow

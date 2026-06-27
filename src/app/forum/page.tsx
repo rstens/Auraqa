@@ -28,9 +28,7 @@ export default async function ForumPage() {
 
   return (
     <div data-testid="forum-page" className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-      <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-        Community Forum
-      </h1>
+      <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Community Forum</h1>
       <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
         Ask questions, share experiences, and connect with fellow testers
       </p>
@@ -44,12 +42,8 @@ export default async function ForumPage() {
             className="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-5 transition-all hover:border-slate-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600"
           >
             <div>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                {cat.name}
-              </h2>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                {cat.description}
-              </p>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{cat.name}</h2>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{cat.description}</p>
             </div>
             <span className="text-sm text-slate-500 dark:text-slate-400">
               {cat.threadCount} {cat.threadCount === 1 ? "thread" : "threads"}

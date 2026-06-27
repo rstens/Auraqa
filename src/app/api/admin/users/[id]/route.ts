@@ -5,10 +5,7 @@ import { eq } from "drizzle-orm";
 import { auth, isAdmin } from "@/lib/auth";
 import { updateUserRoleSchema } from "@/lib/validators";
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!(await isAdmin())) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -22,10 +19,7 @@ export async function GET(
   return NextResponse.json(result[0]);
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!(await isAdmin())) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -45,7 +39,10 @@ export async function PUT(
   const body = await request.json();
   const parsed = updateUserRoleSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Validation failed", details: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json(
+      { error: "Validation failed", details: parsed.error.flatten() },
+      { status: 400 },
+    );
   }
 
   const [updated] = await db
@@ -59,7 +56,7 @@ export async function PUT(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   if (!(await isAdmin())) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

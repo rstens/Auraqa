@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Validation failed", details: parsed.error.flatten() },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -50,8 +50,8 @@ export async function POST(request: NextRequest) {
         and(
           eq(votes.userId, userId),
           eq(votes.targetType, targetType),
-          eq(votes.targetId, targetId)
-        )
+          eq(votes.targetId, targetId),
+        ),
       )
       .limit(1);
 

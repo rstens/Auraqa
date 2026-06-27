@@ -25,15 +25,25 @@ export default async function AdminDashboard() {
     db.select({ total: count() }).from(tools).where(eq(tools.status, "pending")),
     db.select({ total: count() }).from(forumThreads),
     db.select({ total: count() }).from(forumReplies),
-    db.select({
-      total: count(),
-      inputTokens: sum(aiInteractions.inputTokens),
-      outputTokens: sum(aiInteractions.outputTokens),
-    }).from(aiInteractions),
-    db.select({ id: tools.id, name: tools.name, slug: tools.slug })
-      .from(tools).where(eq(tools.status, "pending")).orderBy(desc(tools.createdAt)).limit(5),
-    db.select({ id: articles.id, title: articles.title, slug: articles.slug })
-      .from(articles).where(eq(articles.status, "draft")).orderBy(desc(articles.createdAt)).limit(5),
+    db
+      .select({
+        total: count(),
+        inputTokens: sum(aiInteractions.inputTokens),
+        outputTokens: sum(aiInteractions.outputTokens),
+      })
+      .from(aiInteractions),
+    db
+      .select({ id: tools.id, name: tools.name, slug: tools.slug })
+      .from(tools)
+      .where(eq(tools.status, "pending"))
+      .orderBy(desc(tools.createdAt))
+      .limit(5),
+    db
+      .select({ id: articles.id, title: articles.title, slug: articles.slug })
+      .from(articles)
+      .where(eq(articles.status, "draft"))
+      .orderBy(desc(articles.createdAt))
+      .limit(5),
   ]);
 
   return (
@@ -42,13 +52,30 @@ export default async function AdminDashboard() {
 
       <div data-testid="admin-stats" className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard testId="stat-users" label="Users" value={userStats[0].total} />
-        <StatCard testId="stat-articles" label="Articles" value={`${publishedArticles[0].total} published / ${draftArticles[0].total} drafts`} />
-        <StatCard testId="stat-tools" label="Tools" value={`${approvedTools[0].total} approved / ${pendingTools[0].total} pending`} highlight={pendingTools[0].total > 0} />
-        <StatCard testId="stat-forum" label="Forum" value={`${threadCount[0].total} threads / ${replyCount[0].total} replies`} />
+        <StatCard
+          testId="stat-articles"
+          label="Articles"
+          value={`${publishedArticles[0].total} published / ${draftArticles[0].total} drafts`}
+        />
+        <StatCard
+          testId="stat-tools"
+          label="Tools"
+          value={`${approvedTools[0].total} approved / ${pendingTools[0].total} pending`}
+          highlight={pendingTools[0].total > 0}
+        />
+        <StatCard
+          testId="stat-forum"
+          label="Forum"
+          value={`${threadCount[0].total} threads / ${replyCount[0].total} replies`}
+        />
       </div>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard testId="stat-ai" label="AI Usage" value={`${aiStats[0].total} calls / ${Number(aiStats[0].inputTokens ?? 0) + Number(aiStats[0].outputTokens ?? 0)} tokens`} />
+        <StatCard
+          testId="stat-ai"
+          label="AI Usage"
+          value={`${aiStats[0].total} calls / ${Number(aiStats[0].inputTokens ?? 0) + Number(aiStats[0].outputTokens ?? 0)} tokens`}
+        />
       </div>
 
       <div className="mt-10 grid gap-8 lg:grid-cols-2">
@@ -78,7 +105,10 @@ export default async function AdminDashboard() {
               ))}
               {pendingTools[0].total > 5 && (
                 <li>
-                  <Link href="/admin/tools?status=pending" className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400">
+                  <Link
+                    href="/admin/tools?status=pending"
+                    className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400"
+                  >
                     View all {pendingTools[0].total} pending &rarr;
                   </Link>
                 </li>
@@ -113,7 +143,10 @@ export default async function AdminDashboard() {
               ))}
               {draftArticles[0].total > 5 && (
                 <li>
-                  <Link href="/admin/articles?status=draft" className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400">
+                  <Link
+                    href="/admin/articles?status=draft"
+                    className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400"
+                  >
                     View all {draftArticles[0].total} drafts &rarr;
                   </Link>
                 </li>
@@ -126,7 +159,17 @@ export default async function AdminDashboard() {
   );
 }
 
-function StatCard({ label, value, highlight, testId }: { label: string; value: string | number; highlight?: boolean; testId: string }) {
+function StatCard({
+  label,
+  value,
+  highlight,
+  testId,
+}: {
+  label: string;
+  value: string | number;
+  highlight?: boolean;
+  testId: string;
+}) {
   return (
     <div
       data-testid={testId}

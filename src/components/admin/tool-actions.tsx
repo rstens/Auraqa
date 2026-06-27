@@ -21,7 +21,9 @@ export function ToolActions({ slug, currentStatus }: { slug: string; currentStat
       if (!res.ok) {
         const text = await res.text();
         let msg = "Action failed";
-        try { msg = JSON.parse(text).error ?? msg; } catch {}
+        try {
+          msg = JSON.parse(text).error ?? msg;
+        } catch {}
         throw new Error(msg);
       }
       if (action === "delete") {
@@ -38,7 +40,10 @@ export function ToolActions({ slug, currentStatus }: { slug: string; currentStat
   return (
     <div data-testid="tool-actions" className="space-y-4">
       {error && (
-        <div data-testid="tool-actions-error" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+        <div
+          data-testid="tool-actions-error"
+          className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400"
+        >
           {error}
         </div>
       )}

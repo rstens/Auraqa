@@ -61,23 +61,30 @@ This starts Next.js (port 3000), PostgreSQL (port 5432), and Adminer (port 8080)
 - **UUIDv7** — use `generateId()` from `src/lib/uuid.ts` for all entity IDs
 - **Server Components** — default to server rendering; use `"use client"` only for interactivity
 - **Drizzle ORM** — no raw SQL strings; use the query builder
+- **Formatting** — Prettier owns code formatting; ESLint defers to it via
+  `eslint-config-prettier`. Run `npm run format` to fix; CI runs
+  `npm run format:check` and fails on unformatted code. Config lives in
+  `.prettierrc.json`; ignored paths in `.prettierignore` (notably
+  `src/db/migrations/` and `public/`).
 
 ## Git Workflow
 
 1. Create a feature branch from `dev`
 2. Make changes with descriptive commits
-3. Run `npm run lint && npm run type-check && npm test` before pushing
+3. Run `npm run format && npm run lint && npm run type-check && npm test` before pushing
 4. Create a pull request targeting `dev`
 
 ## Available Scripts
 
-| Script | Description |
-|--------|------------|
-| `npm run dev` | Start dev server with Turbopack |
-| `npm run build` | Production build |
-| `npm run lint` | ESLint |
-| `npm run type-check` | TypeScript check |
-| `npm run test` | Vitest tests |
-| `npm run db:push` | Push schema (dev) |
-| `npm run db:seed` | Seed data |
-| `npm run db:studio` | Drizzle Studio |
+| Script                 | Description                     |
+| ---------------------- | ------------------------------- |
+| `npm run dev`          | Start dev server with Turbopack |
+| `npm run build`        | Production build                |
+| `npm run format`       | Format code with Prettier       |
+| `npm run format:check` | Verify formatting (used in CI)  |
+| `npm run lint`         | ESLint                          |
+| `npm run type-check`   | TypeScript check                |
+| `npm run test`         | Vitest tests                    |
+| `npm run db:push`      | Push schema (dev)               |
+| `npm run db:seed`      | Seed data                       |
+| `npm run db:studio`    | Drizzle Studio                  |

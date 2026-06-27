@@ -6,10 +6,7 @@ import { GlossaryAdmin } from "@/components/admin/glossary-admin";
 export const dynamic = "force-dynamic";
 
 export default async function AdminGlossaryPage() {
-  const terms = await db
-    .select()
-    .from(glossaryTerms)
-    .orderBy(asc(glossaryTerms.term));
+  const terms = await db.select().from(glossaryTerms).orderBy(asc(glossaryTerms.term));
 
   return (
     <div data-testid="admin-glossary-page">
