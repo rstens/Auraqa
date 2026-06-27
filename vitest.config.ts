@@ -20,9 +20,9 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "text-summary", "html", "json-summary"],
-      // In vitest 4, the `include` glob is enough to enumerate every
-      // matching file (the old `all: true` option was removed — passing
-      // it now is a type error per `error TS2769` in CI run #28303216769).
+      // In Vitest 4, `coverage.include` patterns are enough to enumerate every
+      // matching file (the old `all: true` option was removed; passing it is a
+      // type error).
       // The 90% threshold from docs/TESTING.md, enforced once the suite
       // covers enough surface to clear it. Currently scoped to the pure
       // helper modules under src/lib — page components, API route
