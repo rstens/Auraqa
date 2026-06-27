@@ -20,10 +20,9 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "text-summary", "html", "json-summary"],
-      // Force coverage to enumerate every `include`d file (not just those
-      // imported by a test). Otherwise an untested file silently scores
-      // 100% by not appearing in the report at all.
-      all: true,
+      // In vitest 4, the `include` glob is enough to enumerate every
+      // matching file (the old `all: true` option was removed — passing
+      // it now is a type error per `error TS2769` in CI run #28303216769).
       // The 90% threshold from docs/TESTING.md, enforced once the suite
       // covers enough surface to clear it. Currently scoped to the pure
       // helper modules under src/lib — page components, API route
