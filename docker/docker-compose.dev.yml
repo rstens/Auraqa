@@ -12,7 +12,13 @@
 ###############################################################################
 
 services:
+  # Pinning `image:` alongside `build:` lets CI swap a pre-built image in
+  # via env vars instead of rebuilding every run — compose uses the named
+  # image if it's present locally (e.g. just `docker pull`-ed from GHCR)
+  # and falls back to building when it isn't. Local dev with no env vars
+  # set keeps the old behavior: builds into `auraqa-app-dev:local`.
   app:
+    image: ${IMAGE_REPO:-auraqa-app-dev}:${IMAGE_TAG:-local}
     build:
       dockerfile: docker/Dockerfile.dev
     volumes:
@@ -22,3 +28,8 @@ services:
       NODE_ENV: development
       AUTH_TRUST_HOST: "true"
     command: sh -c "npx drizzle-kit push && npx tsx src/db/seed.ts && npm run dev"
+  # The migrate service builds from the same Dockerfile.dev — point it at
+  # the same cached image so we cache once, not twice. Only the entrypoint
+  # differs (defined in docker-compose.yml).
+  migrate:
+    image: ${IMAGE_REPO:-auraqa-app-dev}:${IMAGE_TAG:-local}

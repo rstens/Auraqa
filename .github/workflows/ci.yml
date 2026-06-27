@@ -58,6 +58,10 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     needs: lint-and-test
+    # Needed for `docker push` to GHCR in the cache-miss path below.
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - uses: actions/checkout@v4
@@ -70,9 +74,96 @@ jobs:
       - name: Write .env from secret
         run: echo "${{ secrets.ENV_DEV }}" > .env.local
 
-      - name: Build and start Docker services
+      # -- Docker image cache --------------------------------------------------
+      #
+      # The dev image baked from docker/Dockerfile.dev is pushed to GHCR
+      # under a content hash; on subsequent runs with the same hash we pull
+      # it instead of rebuilding. Files we hash are exactly those that go
+      # *into* the image — package*.json, root configs, src/, public/, and
+      # both Dockerfiles. Things that don't affect the image (docs, e2e
+      # tests, the workflows themselves) are excluded so they don't churn
+      # the cache.
+      #
+      # Local devs running `docker compose up` without the env vars get the
+      # old behavior — compose builds and tags as `auraqa-app-dev:local`.
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute dev image cache key
+        id: cache
+        env:
+          REPO_OWNER: ${{ github.repository_owner }}
+          # Hash everything that gets baked into Dockerfile.dev:
+          #   - the Dockerfiles themselves (both — prod multi-stage shares deps)
+          #   - npm dependency manifest + lock
+          #   - root config files (next/tsc/drizzle/postcss/eslint) — these
+          #     ride in via `COPY . .` and influence build output
+          #   - src/, public/ — same reason; the user's request maps "app +
+          #     database changes" to "rebuild", and these are where that lives
+          #
+          # Things deliberately excluded so they don't churn the cache:
+          # docs/, e2e/, scripts/, .github/, the README, vitest config,
+          # playwright config — none of them are needed at image runtime.
+          CONTENT_HASH: ${{ hashFiles('docker/Dockerfile', 'docker/Dockerfile.dev', 'package.json', 'package-lock.json', 'next.config.ts', 'tsconfig.json', 'drizzle.config.ts', 'postcss.config.mjs', 'eslint.config.mjs', 'src/**', 'public/**') }}
         run: |
-          DOCKER_BUILDKIT=1 docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml up -d --build --wait
+          # GHCR namespaces must be lowercase; repo owner casing is preserved
+          # by GitHub but Docker will reject mixed case.
+          owner_lc=$(echo "$REPO_OWNER" | tr '[:upper:]' '[:lower:]')
+          repo="ghcr.io/${owner_lc}/auraqa-app-dev"
+          # 16 hex chars is plenty of entropy for a per-repo tag and keeps
+          # the image name readable in the GHCR UI.
+          tag="${CONTENT_HASH:0:16}"
+          {
+            echo "repo=$repo"
+            echo "tag=$tag"
+            echo "image=${repo}:${tag}"
+          } >> "$GITHUB_OUTPUT"
+          echo "Image cache target: ${repo}:${tag}"
+
+      - name: Try to pull cached dev image
+        id: pull
+        continue-on-error: true
+        env:
+          IMAGE: ${{ steps.cache.outputs.image }}
+        run: |
+          if docker pull "$IMAGE" 2>/dev/null; then
+            echo "hit=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Reusing cached image $IMAGE — no rebuild needed."
+          else
+            echo "hit=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No cached image for this content hash — will build fresh and push."
+          fi
+
+      - name: Build and start Docker services
+        env:
+          IMAGE_REPO: ${{ steps.cache.outputs.repo }}
+          IMAGE_TAG: ${{ steps.cache.outputs.tag }}
+        # No `--build` flag: compose builds only if the named image isn't
+        # already present (i.e. the pull step missed). On a hit, it boots
+        # straight from the pulled image.
+        run: |
+          DOCKER_BUILDKIT=1 docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml up -d --wait
+
+      - name: Push newly-built image to GHCR
+        # Only on cache miss — on a hit we already have what's in the
+        # registry. `if: success()` (the default) ensures we don't push a
+        # half-built image after a failed boot.
+        if: steps.pull.outputs.hit == 'false'
+        env:
+          IMAGE: ${{ steps.cache.outputs.image }}
+          REPO: ${{ steps.cache.outputs.repo }}
+        run: |
+          # Tag floating `:latest` alongside the content-hash tag so
+          # external consumers (e.g. a future preview-deploy job) can grab
+          # the most-recent build without knowing the hash.
+          docker tag "$IMAGE" "${REPO}:latest"
+          docker push "$IMAGE"
+          docker push "${REPO}:latest"
 
       - name: Wait for app to be ready
         run: |
