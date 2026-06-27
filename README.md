@@ -128,6 +128,7 @@ npm run db:studio    # Open Drizzle Studio
 - **CI** (`.github/workflows/ci.yml`) — format check, lint, type check, Vitest, then a Dockerized Playwright smoke run on every push and PR to `dev` / `main`. The dev Docker image is cached on GHCR keyed by a content hash of the Dockerfiles, lockfile, root configs, and `src/` + `public/` — runs with no relevant changes reuse the image and skip the ~60s build.
 - **Security Scan** (`.github/workflows/security.yml`) — manually-dispatched, gated by an `intensity` input (`smoke` / `normal` / `extreme`). See [`docs/SECURITY.md`](docs/SECURITY.md).
 - **Dependabot** (`.github/dependabot.yml`) — weekly Monday scans across npm, GitHub Actions, and Docker, with framework-specific groupings so Next / React / Drizzle / Auth.js bumps land in their own PRs.
+- **SonarQube Cloud** (`.github/workflows/sonarcloud.yml`) — runs alongside CI, ships vitest LCOV coverage to the SonarCloud project (`rstens_Auraqa`) and posts a Quality Gate decoration on every PR. Config lives in `sonar-project.properties`; gated on a `SONAR_TOKEN` repo secret.
 
 ## License
 
