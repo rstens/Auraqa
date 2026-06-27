@@ -550,7 +550,7 @@ jobs:
           header="**Triggered by [Security Scan run #${RUN_ID}](${REPO_URL}/actions/runs/${RUN_ID})** (intensity: \`${INTENSITY}\`)."
 
           prompt=$(cat <<'PROMPT'
-          Review the latest Security Scan workflow run on rstens/Auraqa and open a PR
+          Review the latest Security Scan workflow run for this repository and open a PR
           that addresses every actionable finding.
 
           Steps:
