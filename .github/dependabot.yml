@@ -1,0 +1,117 @@
+###############################################################################
+# AuraQA Dependabot Configuration
+#
+# Weekly dependency scans across every ecosystem this repo pins. Findings
+# arrive as PRs against `dev`, grouped to keep the noise down.
+#
+# Schedule rationale: weekly is the right cadence for a small team — daily
+# fans out too many PRs to triage, monthly lets actively-exploited CVEs sit
+# longer than they should. Security advisories from GitHub still land
+# immediately regardless of this schedule.
+#
+# @see https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+###############################################################################
+
+version: 2
+
+updates:
+  # ---------------------------------------------------------------------------
+  # npm — the application's runtime + build deps
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:00"
+      timezone: America/Vancouver
+    open-pull-requests-limit: 10
+    target-branch: dev
+    labels:
+      - dependencies
+      - npm
+    commit-message:
+      prefix: chore(deps)
+      prefix-development: chore(deps-dev)
+      include: scope
+    # Group related updates so we get one PR per cluster instead of a
+    # PR per package.
+    groups:
+      # Patch + minor across every runtime dep — usually safe to merge in
+      # bulk after CI passes.
+      production-minor-and-patch:
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
+      # Same idea for devDeps (Prettier, ESLint, Vitest, Playwright, types).
+      development-minor-and-patch:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+      # Anchor framework majors get their own PR so they're reviewed
+      # carefully rather than swept into the bulk group above.
+      next:
+        patterns:
+          - next
+          - eslint-config-next
+          - "@next/*"
+      react:
+        patterns:
+          - react
+          - react-dom
+          - "@types/react"
+          - "@types/react-dom"
+      drizzle:
+        patterns:
+          - drizzle-orm
+          - drizzle-kit
+      auth:
+        patterns:
+          - next-auth
+          - "@auth/*"
+
+  # ---------------------------------------------------------------------------
+  # GitHub Actions — pin updates for the workflows under .github/workflows/
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:00"
+      timezone: America/Vancouver
+    open-pull-requests-limit: 5
+    target-branch: dev
+    labels:
+      - dependencies
+      - github-actions
+    commit-message:
+      prefix: chore(ci)
+      include: scope
+    groups:
+      # Roll everything into one PR per week — the workflows are small
+      # and reviewers want to see action-pin bumps together.
+      actions:
+        patterns:
+          - "*"
+
+  # ---------------------------------------------------------------------------
+  # Docker — base-image bumps for both Dockerfiles
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: docker
+    directory: /docker
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:00"
+      timezone: America/Vancouver
+    open-pull-requests-limit: 5
+    target-branch: dev
+    labels:
+      - dependencies
+      - docker
+    commit-message:
+      prefix: chore(docker)
+      include: scope
