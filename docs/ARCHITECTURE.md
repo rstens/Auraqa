@@ -2,7 +2,7 @@
 
 ## Overview
 
-AuraQA is a community platform for software testers built as a full-stack Next.js 15 application with PostgreSQL 18 for data persistence and Claude AI for intelligent features.
+AuraQA is a community platform for software testers built as a full-stack Next.js 16 application with PostgreSQL 18 for data persistence and Claude AI for intelligent features.
 
 ## System Architecture
 
@@ -13,7 +13,7 @@ AuraQA is a community platform for software testers built as a full-stack Next.j
 └──────────────────────┬──────────────────────────────┘
                        │ HTTP/HTTPS
 ┌──────────────────────▼──────────────────────────────┐
-│              Next.js 15 App Router                   │
+│              Next.js 16 App Router                   │
 │  ┌─────────────┐  ┌──────────┐  ┌────────────────┐ │
 │  │ Server       │  │ API      │  │ Auth           │ │
 │  │ Components   │  │ Routes   │  │ (NextAuth.js)  │ │

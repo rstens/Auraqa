@@ -4,7 +4,7 @@
 
 **A community platform for software testers** — consolidating knowledge articles, community forums/Q&A, and a testing tools directory into a single destination.
 
-Built with Next.js 15, PostgreSQL 18, and Claude AI.
+Built with Next.js 16, PostgreSQL 18, and Claude AI.
 
 ## Features
 
@@ -66,7 +66,7 @@ npm run dev
 
 | Layer      | Technology                                  |
 | ---------- | ------------------------------------------- |
-| Framework  | Next.js 15 (App Router, TypeScript)         |
+| Framework  | Next.js 16 (App Router, TypeScript)         |
 | Styling    | Tailwind CSS + shadcn/ui                    |
 | Database   | PostgreSQL 18                               |
 | ORM        | Drizzle ORM                                 |
@@ -106,17 +106,26 @@ src/
 ```bash
 npm run dev          # Start dev server with Turbopack
 npm run build        # Production build
+npm run start        # Run the production build locally
 npm run format       # Format code with Prettier
 npm run format:check # Check formatting (used in CI)
 npm run lint         # Run ESLint
 npm run type-check   # TypeScript type checking
 npm run test         # Run Vitest tests
+npm run test:watch   # Vitest in watch mode
+npm run test:e2e     # Playwright end-to-end smoke tests
 npm run db:generate  # Generate migration files
 npm run db:migrate   # Apply migrations
 npm run db:push      # Push schema (dev only)
 npm run db:seed      # Seed categories and tags
 npm run db:studio    # Open Drizzle Studio
 ```
+
+## CI & Automation
+
+- **CI** (`.github/workflows/ci.yml`) — format check, lint, type check, Vitest, then a Dockerized Playwright smoke run on every push and PR to `dev` / `main`. The dev Docker image is cached on GHCR keyed by a content hash of the Dockerfiles, lockfile, root configs, and `src/` + `public/` — runs with no relevant changes reuse the image and skip the ~60s build.
+- **Security Scan** (`.github/workflows/security.yml`) — manually-dispatched, gated by an `intensity` input (`smoke` / `normal` / `extreme`). See [`docs/SECURITY.md`](docs/SECURITY.md).
+- **Dependabot** (`.github/dependabot.yml`) — weekly Monday scans across npm, GitHub Actions, and Docker, with framework-specific groupings so Next / React / Drizzle / Auth.js bumps land in their own PRs.
 
 ## License
 
