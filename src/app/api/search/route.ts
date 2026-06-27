@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
       })
       .from(articles)
       .where(
-        and2(
+        and(
           eq(articles.status, "published"),
           or(
             ilike(articles.title, pattern),
@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
       })
       .from(tools)
       .where(
-        and2(
+        and(
           eq(tools.status, "approved"),
           or(
             ilike(tools.name, pattern),
@@ -161,12 +161,4 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({ results, query: q });
-}
-
-/** Helper to combine AND conditions including undefined. */
-function and2(...conditions: (ReturnType<typeof eq> | ReturnType<typeof or> | undefined)[]) {
-  const defined = conditions.filter(Boolean);
-  if (defined.length === 0) return undefined;
-  if (defined.length === 1) return defined[0];
-  return and(...defined);
 }

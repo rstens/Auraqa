@@ -4,12 +4,13 @@
  * Lists all forum categories with descriptions and thread counts.
  */
 
+// Opt out of static prerendering so `next build` succeeds without a live DB.
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { db } from "@/db";
 import { forumCategories, forumThreads } from "@/db/schema";
 import { eq, count, asc } from "drizzle-orm";
-
-export const dynamic = "force-dynamic";
 
 export default async function ForumPage() {
   const categories = await db

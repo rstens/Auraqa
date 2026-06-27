@@ -121,7 +121,7 @@ export const tags = pgTable("tags", {
  */
 export const articles = pgTable("articles", {
   id: uuid("id").primaryKey(),
-  authorId: uuid("author_id").notNull().references(() => users.id, { onDelete: "set null" }),
+  authorId: uuid("author_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   slug: text("slug").unique().notNull(),
   summary: text("summary").default(""),
@@ -171,7 +171,7 @@ export const forumCategories = pgTable("forum_categories", {
 export const forumThreads = pgTable("forum_threads", {
   id: uuid("id").primaryKey(),
   categoryId: integer("category_id").notNull().references(() => forumCategories.id, { onDelete: "cascade" }),
-  authorId: uuid("author_id").notNull().references(() => users.id, { onDelete: "set null" }),
+  authorId: uuid("author_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   content: text("content").notNull(),
   isPinned: boolean("is_pinned").notNull().default(false),
@@ -203,7 +203,10 @@ export const forumThreadTags = pgTable("forum_thread_tags", {
 export const forumReplies = pgTable("forum_replies", {
   id: uuid("id").primaryKey(),
   threadId: uuid("thread_id").notNull().references(() => forumThreads.id, { onDelete: "cascade" }),
-  authorId: uuid("author_id").notNull().references(() => users.id, { onDelete: "set null" }),
+  // authorId is notNull, so ON DELETE CASCADE — the SET NULL alternative
+  // contradicts the not-null constraint and blocks user deletion at the DB
+  // level. See PR #9 for the original fix.
+  authorId: uuid("author_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   // Self-reference: a reply's parent is another reply in the same thread.
   // AnyPgColumn cast breaks the circular forward-reference at type level.
   // Nullable + ON DELETE SET NULL so removing a parent promotes its
@@ -231,7 +234,7 @@ export const forumReplies = pgTable("forum_replies", {
  */
 export const tools = pgTable("tools", {
   id: uuid("id").primaryKey(),
-  submittedBy: uuid("submitted_by").notNull().references(() => users.id, { onDelete: "set null" }),
+  submittedBy: uuid("submitted_by").notNull().references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   slug: text("slug").unique().notNull(),
   description: text("description").notNull(),
@@ -268,7 +271,7 @@ export const toolTags = pgTable("tool_tags", {
 export const toolReviews = pgTable("tool_reviews", {
   id: uuid("id").primaryKey(),
   toolId: uuid("tool_id").notNull().references(() => tools.id, { onDelete: "cascade" }),
-  authorId: uuid("author_id").notNull().references(() => users.id, { onDelete: "set null" }),
+  authorId: uuid("author_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   rating: smallint("rating").notNull(),
   title: text("title"),
   content: text("content").notNull(),

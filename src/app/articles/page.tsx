@@ -5,14 +5,15 @@
  * with pagination. Links to article detail pages.
  */
 
+// Opt out of static prerendering so `next build` succeeds without a live DB.
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { db } from "@/db";
 import { articles, users, articleTags, tags } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { timeAgo } from "@/lib/utils";
 import { renderMarkdown } from "@/lib/markdown";
-
-export const dynamic = "force-dynamic";
 
 export default async function ArticlesPage() {
   const articleList = await db

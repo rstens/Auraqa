@@ -4,12 +4,13 @@
  * Displays approved testing tools with ratings and categories.
  */
 
+// Opt out of static prerendering so `next build` succeeds without a live DB.
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { db } from "@/db";
 import { tools } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
-
-export const dynamic = "force-dynamic";
 
 export default async function ToolsPage() {
   const toolList = await db
