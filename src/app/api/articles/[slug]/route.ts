@@ -11,84 +11,76 @@ import { db } from "@/db";
 import { articles } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { auth, isAdmin } from "@/lib/auth";
-import { updateArticleSchema } from "@/lib/validators";
+import { slugParamSchema, updateArticleSchema } from "@/lib/validators";
+import { jsonError, parseBody, parseParams, withErrorHandling } from "@/lib/api-helpers";
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> },
-) {
-  const { slug } = await params;
+type Ctx = { params: Promise<{ slug: string }> };
 
-  const result = await db.select().from(articles).where(eq(articles.slug, slug)).limit(1);
+export const GET = withErrorHandling(
+  "GET /api/articles/[slug]",
+  async (_request: NextRequest, ctx: Ctx) => {
+    const params = parseParams(await ctx.params, slugParamSchema);
+    if (!params.ok) return params.response;
+    const { slug } = params.data;
 
-  if (result.length === 0) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
+    const result = await db.select().from(articles).where(eq(articles.slug, slug)).limit(1);
+    if (result.length === 0) return jsonError("Not found", 404);
+    return NextResponse.json(result[0]);
+  },
+);
 
-  return NextResponse.json(result[0]);
-}
+export const PUT = withErrorHandling(
+  "PUT /api/articles/[slug]",
+  async (request: NextRequest, ctx: Ctx) => {
+    const params = parseParams(await ctx.params, slugParamSchema);
+    if (!params.ok) return params.response;
+    const { slug } = params.data;
 
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+    const session = await auth();
+    if (!session?.user?.id) return jsonError("Unauthorized", 401);
 
-  const existing = await db.select().from(articles).where(eq(articles.slug, slug)).limit(1);
+    const existing = await db.select().from(articles).where(eq(articles.slug, slug)).limit(1);
+    if (existing.length === 0) return jsonError("Not found", 404);
 
-  if (existing.length === 0) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
+    if (existing[0].authorId !== session.user.id && !(await isAdmin())) {
+      return jsonError("Forbidden", 403);
+    }
 
-  if (existing[0].authorId !== session.user.id && !(await isAdmin())) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+    const body = await parseBody(request, updateArticleSchema);
+    if (!body.ok) return body.response;
 
-  const body = await request.json();
-  const parsed = updateArticleSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.flatten() },
-      { status: 400 },
-    );
-  }
+    const updates: Record<string, unknown> = { ...body.data, updatedAt: new Date() };
+    if (body.data.status === "published" && existing[0].status !== "published") {
+      updates.publishedAt = new Date();
+    }
 
-  const updates: Record<string, unknown> = { ...parsed.data, updatedAt: new Date() };
-  if (parsed.data.status === "published" && existing[0].status !== "published") {
-    updates.publishedAt = new Date();
-  }
+    const [updated] = await db
+      .update(articles)
+      .set(updates)
+      .where(eq(articles.slug, slug))
+      .returning();
+    return NextResponse.json(updated);
+  },
+);
 
-  const [updated] = await db
-    .update(articles)
-    .set(updates)
-    .where(eq(articles.slug, slug))
-    .returning();
+export const DELETE = withErrorHandling(
+  "DELETE /api/articles/[slug]",
+  async (_request: NextRequest, ctx: Ctx) => {
+    const params = parseParams(await ctx.params, slugParamSchema);
+    if (!params.ok) return params.response;
+    const { slug } = params.data;
 
-  return NextResponse.json(updated);
-}
+    const session = await auth();
+    if (!session?.user?.id) return jsonError("Unauthorized", 401);
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> },
-) {
-  const { slug } = await params;
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+    const existing = await db.select().from(articles).where(eq(articles.slug, slug)).limit(1);
+    if (existing.length === 0) return jsonError("Not found", 404);
 
-  const existing = await db.select().from(articles).where(eq(articles.slug, slug)).limit(1);
+    if (existing[0].authorId !== session.user.id && !(await isAdmin())) {
+      return jsonError("Forbidden", 403);
+    }
 
-  if (existing.length === 0) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
-
-  if (existing[0].authorId !== session.user.id && !(await isAdmin())) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  await db.delete(articles).where(eq(articles.slug, slug));
-
-  return NextResponse.json({ success: true });
-}
+    await db.delete(articles).where(eq(articles.slug, slug));
+    return NextResponse.json({ success: true });
+  },
+);

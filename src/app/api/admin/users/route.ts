@@ -3,17 +3,17 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { isAdmin } from "@/lib/auth";
+import { adminUsersListQuerySchema } from "@/lib/validators";
+import { jsonError, parseQuery, withErrorHandling } from "@/lib/api-helpers";
 
-export async function GET(request: NextRequest) {
-  if (!(await isAdmin())) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+export const GET = withErrorHandling("GET /api/admin/users", async (request: NextRequest) => {
+  if (!(await isAdmin())) return jsonError("Forbidden", 403);
 
-  const { searchParams } = request.nextUrl;
-  const role = searchParams.get("role");
-  const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit") ?? "50")));
+  const query = parseQuery(request, adminUsersListQuerySchema);
+  if (!query.ok) return query.response;
+  const { role, limit } = query.data;
 
-  let query = db
+  let q = db
     .select({
       id: users.id,
       name: users.name,
@@ -28,10 +28,9 @@ export async function GET(request: NextRequest) {
     .orderBy(desc(users.createdAt))
     .limit(limit);
 
-  if (role === "admin" || role === "user") {
-    query = query.where(eq(users.role, role)) as typeof query;
+  if (role) {
+    q = q.where(eq(users.role, role)) as typeof q;
   }
 
-  const userList = await query;
-  return NextResponse.json(userList);
-}
+  return NextResponse.json(await q);
+});

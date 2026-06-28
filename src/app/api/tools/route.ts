@@ -13,34 +13,25 @@ import { auth } from "@/lib/auth";
 import { createToolSchema } from "@/lib/validators";
 import { generateId } from "@/lib/uuid";
 import { slugify } from "@/lib/utils";
+import { jsonError, parseBody, withErrorHandling } from "@/lib/api-helpers";
 
-export async function GET() {
+export const GET = withErrorHandling("GET /api/tools", async () => {
   const results = await db
     .select()
     .from(tools)
     .where(eq(tools.status, "approved"))
     .orderBy(desc(tools.avgRating))
     .limit(50);
-
   return NextResponse.json(results);
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withErrorHandling("POST /api/tools", async (request: NextRequest) => {
   const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!session?.user?.id) return jsonError("Unauthorized", 401);
 
-  const body = await request.json();
-  const parsed = createToolSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.flatten() },
-      { status: 400 },
-    );
-  }
-
-  const { name, description, websiteUrl, category, pricing } = parsed.data;
+  const body = await parseBody(request, createToolSchema);
+  if (!body.ok) return body.response;
+  const { name, description, websiteUrl, category, pricing } = body.data;
   const slug = slugify(name) || generateId().slice(0, 8);
   const id = generateId();
 
@@ -60,4 +51,4 @@ export async function POST(request: NextRequest) {
     .returning();
 
   return NextResponse.json(tool, { status: 201 });
-}
+});

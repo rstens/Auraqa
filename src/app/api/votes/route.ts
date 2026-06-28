@@ -16,6 +16,7 @@ import { eq, and, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { castVoteSchema } from "@/lib/validators";
 import { generateId } from "@/lib/uuid";
+import { jsonError, parseBody, withErrorHandling } from "@/lib/api-helpers";
 
 /** Dispatch map from vote target type to the table whose vote_score it updates. */
 const TARGET_TABLES = {
@@ -24,23 +25,14 @@ const TARGET_TABLES = {
   reply: forumReplies,
 } as const;
 
-export async function POST(request: NextRequest) {
+export const POST = withErrorHandling("POST /api/votes", async (request: NextRequest) => {
   const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!session?.user?.id) return jsonError("Unauthorized", 401);
   const userId = session.user.id;
 
-  const body = await request.json();
-  const parsed = castVoteSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.flatten() },
-      { status: 400 },
-    );
-  }
-
-  const { targetType, targetId, value } = parsed.data;
+  const body = await parseBody(request, castVoteSchema);
+  if (!body.ok) return body.response;
+  const { targetType, targetId, value } = body.data;
 
   const scoreDelta = await db.transaction(async (tx) => {
     const existing = await tx
@@ -90,4 +82,4 @@ export async function POST(request: NextRequest) {
   });
 
   return NextResponse.json({ success: true, scoreDelta });
-}
+});

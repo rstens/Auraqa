@@ -1,0 +1,40 @@
+meta {
+  name: Update profile — boundary (malformed JSON body)
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{baseUrl}}/api/profile
+  body: text
+  auth: none
+}
+
+headers {
+  content-type: application/json
+}
+
+body:text {
+  { not valid json
+}
+
+tests {
+  test("malformed JSON is rejected with 400/401, not 500", function() {
+    // 401 is acceptable if the auth check runs before parseBody — the
+    // point is that a syntactically broken body must not crash the
+    // handler with a stack-trace 500.
+    expect(res.getStatus()).to.be.oneOf([400, 401]);
+  });
+
+  test("body is structured JSON (no stack trace leak)", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("error");
+  });
+}
+
+docs {
+  Regression for the api-helpers `parseBody` path: pre-hardening,
+  `await request.json()` on a malformed body threw an uncaught
+  SyntaxError → 500. After the parseBody helper, this is a clean 400
+  (or 401 if auth runs first and rejects the anonymous request).
+}

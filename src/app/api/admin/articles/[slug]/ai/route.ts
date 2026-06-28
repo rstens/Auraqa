@@ -3,94 +3,87 @@ import { db } from "@/db";
 import { articles, tags, articleTags, aiInteractions } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { isAdmin, auth } from "@/lib/auth";
-import { adminAiActionSchema } from "@/lib/validators";
+import { adminAiActionSchema, slugParamSchema } from "@/lib/validators";
 import { summarizeArticle, suggestTags } from "@/lib/ai";
 import { generateId } from "@/lib/uuid";
+import { jsonError, parseBody, parseParams, withErrorHandling } from "@/lib/api-helpers";
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> },
-) {
-  if (!(await isAdmin())) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+type Ctx = { params: Promise<{ slug: string }> };
 
-  const session = await auth();
-  const { slug } = await params;
+export const POST = withErrorHandling(
+  "POST /api/admin/articles/[slug]/ai",
+  async (request: NextRequest, ctx: Ctx) => {
+    if (!(await isAdmin())) return jsonError("Forbidden", 403);
+    const params = parseParams(await ctx.params, slugParamSchema);
+    if (!params.ok) return params.response;
+    const { slug } = params.data;
 
-  const articleResult = await db.select().from(articles).where(eq(articles.slug, slug)).limit(1);
-  if (articleResult.length === 0) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
-  const article = articleResult[0];
+    const session = await auth();
 
-  const body = await request.json();
-  const parsed = adminAiActionSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid action" }, { status: 400 });
-  }
+    const articleResult = await db.select().from(articles).where(eq(articles.slug, slug)).limit(1);
+    if (articleResult.length === 0) return jsonError("Not found", 404);
+    const article = articleResult[0];
 
-  const { action } = parsed.data;
+    const body = await parseBody(request, adminAiActionSchema);
+    if (!body.ok) return body.response;
+    const { action } = body.data;
 
-  if (action === "summarize") {
-    const summary = await summarizeArticle(article.content);
-    if (!summary) {
-      return NextResponse.json({ error: "AI summarization failed" }, { status: 502 });
+    if (action === "summarize") {
+      const summary = await summarizeArticle(article.content);
+      if (!summary) return jsonError("AI summarization failed", 502);
+
+      await db
+        .update(articles)
+        .set({ aiSummary: summary, updatedAt: new Date() })
+        .where(eq(articles.slug, slug));
+
+      await db.insert(aiInteractions).values({
+        id: generateId(),
+        userId: session?.user?.id ?? null,
+        interactionType: "summarize",
+        inputText: article.content.slice(0, 500),
+        outputText: summary,
+        model: "claude-sonnet-4-6",
+        inputTokens: null,
+        outputTokens: null,
+      });
+
+      return NextResponse.json({ summary });
     }
 
-    await db
-      .update(articles)
-      .set({ aiSummary: summary, updatedAt: new Date() })
-      .where(eq(articles.slug, slug));
+    if (action === "suggest-tags") {
+      const allTags = await db.select({ id: tags.id, name: tags.name }).from(tags);
+      const tagNames = allTags.map((t) => t.name);
+      const suggested = await suggestTags(article.content, tagNames);
+      if (!suggested) return jsonError("AI tag suggestion failed", 502);
 
-    await db.insert(aiInteractions).values({
-      id: generateId(),
-      userId: session?.user?.id ?? null,
-      interactionType: "summarize",
-      inputText: article.content.slice(0, 500),
-      outputText: summary,
-      model: "claude-sonnet-4-6",
-      inputTokens: null,
-      outputTokens: null,
-    });
-
-    return NextResponse.json({ summary });
-  }
-
-  if (action === "suggest-tags") {
-    const allTags = await db.select({ id: tags.id, name: tags.name }).from(tags);
-    const tagNames = allTags.map((t) => t.name);
-    const suggested = await suggestTags(article.content, tagNames);
-    if (!suggested) {
-      return NextResponse.json({ error: "AI tag suggestion failed" }, { status: 502 });
-    }
-
-    for (const tagName of suggested) {
-      const match = allTags.find((t) => t.name.toLowerCase() === tagName.toLowerCase());
-      if (match) {
-        await db
-          .insert(articleTags)
-          .values({
-            articleId: article.id,
-            tagId: match.id,
-          })
-          .onConflictDoNothing();
+      for (const tagName of suggested) {
+        const match = allTags.find((t) => t.name.toLowerCase() === tagName.toLowerCase());
+        if (match) {
+          await db
+            .insert(articleTags)
+            .values({
+              articleId: article.id,
+              tagId: match.id,
+            })
+            .onConflictDoNothing();
+        }
       }
+
+      await db.insert(aiInteractions).values({
+        id: generateId(),
+        userId: session?.user?.id ?? null,
+        interactionType: "suggest-tags",
+        inputText: article.content.slice(0, 500),
+        outputText: JSON.stringify(suggested),
+        model: "claude-sonnet-4-6",
+        inputTokens: null,
+        outputTokens: null,
+      });
+
+      return NextResponse.json({ tags: suggested });
     }
 
-    await db.insert(aiInteractions).values({
-      id: generateId(),
-      userId: session?.user?.id ?? null,
-      interactionType: "suggest-tags",
-      inputText: article.content.slice(0, 500),
-      outputText: JSON.stringify(suggested),
-      model: "claude-sonnet-4-6",
-      inputTokens: null,
-      outputTokens: null,
-    });
-
-    return NextResponse.json({ tags: suggested });
-  }
-
-  return NextResponse.json({ error: "Unknown action" }, { status: 400 });
-}
+    return jsonError("Unknown action", 400);
+  },
+);

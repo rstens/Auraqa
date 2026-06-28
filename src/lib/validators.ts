@@ -121,3 +121,25 @@ export const listQuerySchema = z.object({
 export const threadsListQuerySchema = listQuerySchema.extend({
   categoryId: z.coerce.number().int().positive().optional(),
 });
+
+/**
+ * Route-param schemas — applied to `await context.params` via the
+ * `parseParams` helper. Each one rejects path traversal, oversized
+ * input, and shape mismatches at the handler boundary so the DB layer
+ * never sees garbage.
+ */
+const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,98}[a-z0-9])?$/i;
+
+export const slugParamSchema = z.object({
+  slug: z.string().min(1).max(100).regex(SLUG_PATTERN, "must be a URL-safe slug"),
+});
+
+export const idParamSchema = z.object({
+  id: z.string().uuid(),
+});
+
+/** Admin users-list query — optional role filter and limit (1–100). */
+export const adminUsersListQuerySchema = z.object({
+  role: z.enum(["admin", "user"]).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+});

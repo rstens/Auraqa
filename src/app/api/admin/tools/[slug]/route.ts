@@ -3,55 +3,50 @@ import { db } from "@/db";
 import { tools } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { isAdmin } from "@/lib/auth";
-import { updateToolSchema } from "@/lib/validators";
+import { slugParamSchema, updateToolSchema } from "@/lib/validators";
+import { jsonError, parseBody, parseParams, withErrorHandling } from "@/lib/api-helpers";
 
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
-  if (!(await isAdmin())) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+type Ctx = { params: Promise<{ slug: string }> };
 
-  const { slug } = await params;
-  const existing = await db.select().from(tools).where(eq(tools.slug, slug)).limit(1);
-  if (existing.length === 0) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
+export const PUT = withErrorHandling(
+  "PUT /api/admin/tools/[slug]",
+  async (request: NextRequest, ctx: Ctx) => {
+    if (!(await isAdmin())) return jsonError("Forbidden", 403);
+    const params = parseParams(await ctx.params, slugParamSchema);
+    if (!params.ok) return params.response;
+    const { slug } = params.data;
 
-  const body = await request.json();
-  const parsed = updateToolSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.flatten() },
-      { status: 400 },
-    );
-  }
+    const existing = await db.select().from(tools).where(eq(tools.slug, slug)).limit(1);
+    if (existing.length === 0) return jsonError("Not found", 404);
 
-  const [updated] = await db
-    .update(tools)
-    .set({ ...parsed.data, updatedAt: new Date() })
-    .where(eq(tools.slug, slug))
-    .returning();
+    const body = await parseBody(request, updateToolSchema);
+    if (!body.ok) return body.response;
 
-  return NextResponse.json(updated);
-}
+    const [updated] = await db
+      .update(tools)
+      .set({ ...body.data, updatedAt: new Date() })
+      .where(eq(tools.slug, slug))
+      .returning();
+    return NextResponse.json(updated);
+  },
+);
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> },
-) {
-  if (!(await isAdmin())) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+export const DELETE = withErrorHandling(
+  "DELETE /api/admin/tools/[slug]",
+  async (_request: NextRequest, ctx: Ctx) => {
+    if (!(await isAdmin())) return jsonError("Forbidden", 403);
+    const params = parseParams(await ctx.params, slugParamSchema);
+    if (!params.ok) return params.response;
+    const { slug } = params.data;
 
-  const { slug } = await params;
-  const existing = await db
-    .select({ id: tools.id })
-    .from(tools)
-    .where(eq(tools.slug, slug))
-    .limit(1);
-  if (existing.length === 0) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
+    const existing = await db
+      .select({ id: tools.id })
+      .from(tools)
+      .where(eq(tools.slug, slug))
+      .limit(1);
+    if (existing.length === 0) return jsonError("Not found", 404);
 
-  await db.delete(tools).where(eq(tools.slug, slug));
-  return NextResponse.json({ success: true });
-}
+    await db.delete(tools).where(eq(tools.slug, slug));
+    return NextResponse.json({ success: true });
+  },
+);
