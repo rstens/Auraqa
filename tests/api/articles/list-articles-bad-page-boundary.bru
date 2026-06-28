@@ -5,13 +5,9 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/api/articles
+  url: {{baseUrl}}/api/articles?page=not-a-number
   body: none
   auth: none
-}
-
-params:query {
-  page: not-a-number
 }
 
 tests {
