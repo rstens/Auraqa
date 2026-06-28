@@ -1,0 +1,26 @@
+meta {
+  name: Get article — boundary (special chars in slug)
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/api/articles/admin%27%20OR%201%3D1--
+  body: none
+  auth: none
+}
+
+tests {
+  test("SQLi-shaped slug returns 400 (slug regex rejection), not 500", function() {
+    // The slugParamSchema regex (^[a-z0-9](?:[a-z0-9-]{0,98}[a-z0-9])?$)
+    // rejects anything that isn't URL-safe lowercase + hyphens, so this
+    // probe never even hits the DB.
+    expect(res.getStatus()).to.equal(400);
+  });
+}
+
+docs {
+  Regression: confirms the new slugParamSchema catches SQLi-shaped
+  slugs at the validator layer (parseParams) before they round-trip
+  to Postgres.
+}

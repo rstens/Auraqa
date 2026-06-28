@@ -10,40 +10,31 @@ import { db } from "@/db";
 import { forumThreads } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import { createThreadSchema } from "@/lib/validators";
+import { createThreadSchema, threadsListQuerySchema } from "@/lib/validators";
 import { generateId } from "@/lib/uuid";
+import { jsonError, parseBody, parseQuery, withErrorHandling } from "@/lib/api-helpers";
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = request.nextUrl;
-  const categoryId = searchParams.get("categoryId");
-  const limit = Math.min(50, Math.max(1, Number(searchParams.get("limit") ?? "20")));
+export const GET = withErrorHandling("GET /api/forum/threads", async (request: NextRequest) => {
+  const query = parseQuery(request, threadsListQuerySchema);
+  if (!query.ok) return query.response;
+  const { categoryId, page, limit } = query.data;
+  const offset = (page - 1) * limit;
 
-  let query = db.select().from(forumThreads);
-  if (categoryId) {
-    query = query.where(eq(forumThreads.categoryId, Number(categoryId))) as typeof query;
+  let q = db.select().from(forumThreads);
+  if (categoryId !== undefined) {
+    q = q.where(eq(forumThreads.categoryId, categoryId)) as typeof q;
   }
-
-  const results = await query.orderBy(desc(forumThreads.createdAt)).limit(limit);
-
+  const results = await q.orderBy(desc(forumThreads.createdAt)).limit(limit).offset(offset);
   return NextResponse.json(results);
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withErrorHandling("POST /api/forum/threads", async (request: NextRequest) => {
   const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!session?.user?.id) return jsonError("Unauthorized", 401);
 
-  const body = await request.json();
-  const parsed = createThreadSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.flatten() },
-      { status: 400 },
-    );
-  }
-
-  const { title, content, categoryId } = parsed.data;
+  const body = await parseBody(request, createThreadSchema);
+  if (!body.ok) return body.response;
+  const { title, content, categoryId } = body.data;
   const id = generateId();
 
   const [thread] = await db
@@ -58,4 +49,4 @@ export async function POST(request: NextRequest) {
     .returning();
 
   return NextResponse.json(thread, { status: 201 });
-}
+});

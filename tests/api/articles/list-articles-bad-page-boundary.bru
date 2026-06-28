@@ -1,0 +1,33 @@
+meta {
+  name: List articles — boundary (non-numeric page)
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/api/articles
+  body: none
+  auth: none
+}
+
+params:query {
+  page: not-a-number
+}
+
+tests {
+  test("non-numeric page is rejected with 400, never 500 (regression: SQLMap)", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+
+  test("error body explains the failure", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("error");
+  });
+}
+
+docs {
+  Regression for the SQLMap 500s: before the listQuerySchema gate, a
+  `?page=' OR 1=1--` probe became `Number(...) = NaN`, which the
+  downstream `.limit(NaN)` call passed to Postgres → uncaught 500.
+  This test pins the new contract: bad page = 400, not 500.
+}

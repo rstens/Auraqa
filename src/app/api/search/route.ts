@@ -12,18 +12,12 @@ import { db } from "@/db";
 import { articles, forumThreads, tools, glossaryTerms } from "@/db/schema";
 import { and, eq, or, ilike, desc } from "drizzle-orm";
 import { searchQuerySchema } from "@/lib/validators";
+import { parseQuery, withErrorHandling } from "@/lib/api-helpers";
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = request.nextUrl;
-  const parsed = searchQuerySchema.safeParse(Object.fromEntries(searchParams));
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Invalid search query", details: parsed.error.flatten() },
-      { status: 400 },
-    );
-  }
-
-  const { q, type, limit } = parsed.data;
+export const GET = withErrorHandling("GET /api/search", async (request: NextRequest) => {
+  const query = parseQuery(request, searchQuerySchema);
+  if (!query.ok) return query.response;
+  const { q, type, limit } = query.data;
   const pattern = `%${q}%`;
 
   const results: {
@@ -34,7 +28,6 @@ export async function GET(request: NextRequest) {
     slug: string;
     url: string;
   }[] = [];
-
   if (type === "all" || type === "articles") {
     const articleResults = await db
       .select({
@@ -150,4 +143,4 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({ results, query: q });
-}
+});

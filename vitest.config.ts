@@ -31,6 +31,7 @@ export default defineConfig({
       // gated number down before that work lands.
       include: [
         "src/lib/api.ts",
+        "src/lib/api-helpers.ts",
         "src/lib/markdown.ts",
         "src/lib/uuid.ts",
         "src/lib/utils.ts",

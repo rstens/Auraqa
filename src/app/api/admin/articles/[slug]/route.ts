@@ -3,59 +3,55 @@ import { db } from "@/db";
 import { articles } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { isAdmin } from "@/lib/auth";
-import { updateArticleSchema } from "@/lib/validators";
+import { slugParamSchema, updateArticleSchema } from "@/lib/validators";
+import { jsonError, parseBody, parseParams, withErrorHandling } from "@/lib/api-helpers";
 
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
-  if (!(await isAdmin())) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+type Ctx = { params: Promise<{ slug: string }> };
 
-  const { slug } = await params;
-  const existing = await db.select().from(articles).where(eq(articles.slug, slug)).limit(1);
-  if (existing.length === 0) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
+export const PUT = withErrorHandling(
+  "PUT /api/admin/articles/[slug]",
+  async (request: NextRequest, ctx: Ctx) => {
+    if (!(await isAdmin())) return jsonError("Forbidden", 403);
+    const params = parseParams(await ctx.params, slugParamSchema);
+    if (!params.ok) return params.response;
+    const { slug } = params.data;
 
-  const body = await request.json();
-  const parsed = updateArticleSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.flatten() },
-      { status: 400 },
-    );
-  }
+    const existing = await db.select().from(articles).where(eq(articles.slug, slug)).limit(1);
+    if (existing.length === 0) return jsonError("Not found", 404);
 
-  const updates: Record<string, unknown> = { ...parsed.data, updatedAt: new Date() };
-  if (parsed.data.status === "published" && existing[0].status !== "published") {
-    updates.publishedAt = new Date();
-  }
+    const body = await parseBody(request, updateArticleSchema);
+    if (!body.ok) return body.response;
 
-  const [updated] = await db
-    .update(articles)
-    .set(updates)
-    .where(eq(articles.slug, slug))
-    .returning();
-  return NextResponse.json(updated);
-}
+    const updates: Record<string, unknown> = { ...body.data, updatedAt: new Date() };
+    if (body.data.status === "published" && existing[0].status !== "published") {
+      updates.publishedAt = new Date();
+    }
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> },
-) {
-  if (!(await isAdmin())) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+    const [updated] = await db
+      .update(articles)
+      .set(updates)
+      .where(eq(articles.slug, slug))
+      .returning();
+    return NextResponse.json(updated);
+  },
+);
 
-  const { slug } = await params;
-  const existing = await db
-    .select({ id: articles.id })
-    .from(articles)
-    .where(eq(articles.slug, slug))
-    .limit(1);
-  if (existing.length === 0) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
+export const DELETE = withErrorHandling(
+  "DELETE /api/admin/articles/[slug]",
+  async (_request: NextRequest, ctx: Ctx) => {
+    if (!(await isAdmin())) return jsonError("Forbidden", 403);
+    const params = parseParams(await ctx.params, slugParamSchema);
+    if (!params.ok) return params.response;
+    const { slug } = params.data;
 
-  await db.delete(articles).where(eq(articles.slug, slug));
-  return NextResponse.json({ success: true });
-}
+    const existing = await db
+      .select({ id: articles.id })
+      .from(articles)
+      .where(eq(articles.slug, slug))
+      .limit(1);
+    if (existing.length === 0) return jsonError("Not found", 404);
+
+    await db.delete(articles).where(eq(articles.slug, slug));
+    return NextResponse.json({ success: true });
+  },
+);

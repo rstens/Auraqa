@@ -10,58 +10,63 @@ import { db } from "@/db";
 import { forumReplies, forumThreads } from "@/db/schema";
 import { eq, asc, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import { createReplySchema } from "@/lib/validators";
+import { createReplySchema, idParamSchema } from "@/lib/validators";
 import { generateId } from "@/lib/uuid";
+import { jsonError, parseBody, parseParams, withErrorHandling } from "@/lib/api-helpers";
 
-export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id: threadId } = await params;
+type Ctx = { params: Promise<{ id: string }> };
 
-  const replies = await db
-    .select()
-    .from(forumReplies)
-    .where(eq(forumReplies.threadId, threadId))
-    .orderBy(asc(forumReplies.createdAt));
+export const GET = withErrorHandling(
+  "GET /api/forum/threads/[id]/replies",
+  async (_request: NextRequest, ctx: Ctx) => {
+    const params = parseParams(await ctx.params, idParamSchema);
+    if (!params.ok) return params.response;
 
-  return NextResponse.json(replies);
-}
+    const replies = await db
+      .select()
+      .from(forumReplies)
+      .where(eq(forumReplies.threadId, params.data.id))
+      .orderBy(asc(forumReplies.createdAt));
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id: threadId } = await params;
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+    return NextResponse.json(replies);
+  },
+);
 
-  const body = await request.json();
-  const parsed = createReplySchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.flatten() },
-      { status: 400 },
-    );
-  }
+export const POST = withErrorHandling(
+  "POST /api/forum/threads/[id]/replies",
+  async (request: NextRequest, ctx: Ctx) => {
+    const params = parseParams(await ctx.params, idParamSchema);
+    if (!params.ok) return params.response;
+    const threadId = params.data.id;
 
-  const id = generateId();
+    const session = await auth();
+    if (!session?.user?.id) return jsonError("Unauthorized", 401);
 
-  const [reply] = await db
-    .insert(forumReplies)
-    .values({
-      id,
-      threadId,
-      authorId: session.user.id,
-      content: parsed.data.content,
-      parentId: parsed.data.parentId ?? null,
-    })
-    .returning();
+    const body = await parseBody(request, createReplySchema);
+    if (!body.ok) return body.response;
 
-  // Increment reply count and update last reply timestamp
-  await db
-    .update(forumThreads)
-    .set({
-      replyCount: sql`${forumThreads.replyCount} + 1`,
-      lastReplyAt: new Date(),
-    })
-    .where(eq(forumThreads.id, threadId));
+    const id = generateId();
 
-  return NextResponse.json(reply, { status: 201 });
-}
+    const [reply] = await db
+      .insert(forumReplies)
+      .values({
+        id,
+        threadId,
+        authorId: session.user.id,
+        content: body.data.content,
+        parentId: body.data.parentId ?? null,
+      })
+      .returning();
+
+    // Increment reply count and update last reply timestamp
+    await db
+      .update(forumThreads)
+      .set({
+        replyCount: sql`${forumThreads.replyCount} + 1`,
+        lastReplyAt: new Date(),
+      })
+      .where(eq(forumThreads.id, threadId));
+
+    return NextResponse.json(reply, { status: 201 });
+  },
+);

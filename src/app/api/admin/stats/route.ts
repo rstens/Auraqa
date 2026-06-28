@@ -3,11 +3,10 @@ import { db } from "@/db";
 import { users, articles, tools, forumThreads, forumReplies, aiInteractions } from "@/db/schema";
 import { count, eq, sum } from "drizzle-orm";
 import { isAdmin } from "@/lib/auth";
+import { jsonError, withErrorHandling } from "@/lib/api-helpers";
 
-export async function GET() {
-  if (!(await isAdmin())) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+export const GET = withErrorHandling("GET /api/admin/stats", async () => {
+  if (!(await isAdmin())) return jsonError("Forbidden", 403);
 
   const [
     userStats,
@@ -54,4 +53,4 @@ export async function GET() {
       outputTokens: Number(aiStats[0].outputTokens ?? 0),
     },
   });
-}
+});

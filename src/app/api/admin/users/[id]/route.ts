@@ -3,77 +3,65 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { auth, isAdmin } from "@/lib/auth";
-import { updateUserRoleSchema } from "@/lib/validators";
+import { idParamSchema, updateUserRoleSchema } from "@/lib/validators";
+import { jsonError, parseBody, parseParams, withErrorHandling } from "@/lib/api-helpers";
 
-export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!(await isAdmin())) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+type Ctx = { params: Promise<{ id: string }> };
 
-  const { id } = await params;
-  const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
-  if (result.length === 0) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
+export const GET = withErrorHandling(
+  "GET /api/admin/users/[id]",
+  async (_request: NextRequest, ctx: Ctx) => {
+    if (!(await isAdmin())) return jsonError("Forbidden", 403);
+    const params = parseParams(await ctx.params, idParamSchema);
+    if (!params.ok) return params.response;
 
-  return NextResponse.json(result[0]);
-}
+    const result = await db.select().from(users).where(eq(users.id, params.data.id)).limit(1);
+    if (result.length === 0) return jsonError("Not found", 404);
+    return NextResponse.json(result[0]);
+  },
+);
 
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!(await isAdmin())) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+export const PUT = withErrorHandling(
+  "PUT /api/admin/users/[id]",
+  async (request: NextRequest, ctx: Ctx) => {
+    if (!(await isAdmin())) return jsonError("Forbidden", 403);
+    const params = parseParams(await ctx.params, idParamSchema);
+    if (!params.ok) return params.response;
+    const { id } = params.data;
 
-  const session = await auth();
-  const { id } = await params;
+    const session = await auth();
+    if (session?.user?.id === id) return jsonError("Cannot change your own role", 400);
 
-  if (session?.user?.id === id) {
-    return NextResponse.json({ error: "Cannot change your own role" }, { status: 400 });
-  }
+    const existing = await db.select({ id: users.id }).from(users).where(eq(users.id, id)).limit(1);
+    if (existing.length === 0) return jsonError("Not found", 404);
 
-  const existing = await db.select({ id: users.id }).from(users).where(eq(users.id, id)).limit(1);
-  if (existing.length === 0) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
+    const body = await parseBody(request, updateUserRoleSchema);
+    if (!body.ok) return body.response;
 
-  const body = await request.json();
-  const parsed = updateUserRoleSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.flatten() },
-      { status: 400 },
-    );
-  }
+    const [updated] = await db
+      .update(users)
+      .set({ role: body.data.role, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return NextResponse.json(updated);
+  },
+);
 
-  const [updated] = await db
-    .update(users)
-    .set({ role: parsed.data.role, updatedAt: new Date() })
-    .where(eq(users.id, id))
-    .returning();
+export const DELETE = withErrorHandling(
+  "DELETE /api/admin/users/[id]",
+  async (_request: NextRequest, ctx: Ctx) => {
+    if (!(await isAdmin())) return jsonError("Forbidden", 403);
+    const params = parseParams(await ctx.params, idParamSchema);
+    if (!params.ok) return params.response;
+    const { id } = params.data;
 
-  return NextResponse.json(updated);
-}
+    const session = await auth();
+    if (session?.user?.id === id) return jsonError("Cannot delete your own account", 400);
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  if (!(await isAdmin())) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+    const existing = await db.select({ id: users.id }).from(users).where(eq(users.id, id)).limit(1);
+    if (existing.length === 0) return jsonError("Not found", 404);
 
-  const session = await auth();
-  const { id } = await params;
-
-  if (session?.user?.id === id) {
-    return NextResponse.json({ error: "Cannot delete your own account" }, { status: 400 });
-  }
-
-  const existing = await db.select({ id: users.id }).from(users).where(eq(users.id, id)).limit(1);
-  if (existing.length === 0) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
-
-  await db.delete(users).where(eq(users.id, id));
-  return NextResponse.json({ success: true });
-}
+    await db.delete(users).where(eq(users.id, id));
+    return NextResponse.json({ success: true });
+  },
+);

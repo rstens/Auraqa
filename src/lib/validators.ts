@@ -104,3 +104,60 @@ export const searchQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });
+
+/**
+ * Treat the empty string as "param not provided" so a request like
+ * `?page=&limit=` falls back to schema defaults instead of being
+ * coerced to 0 (which `z.coerce.number()` does by default and which
+ * then fails `.positive()` with a 400). The behavior we want is the
+ * same one users got before the schema existed — an absent param
+ * means "use the default".
+ */
+const emptyAsUndefined = (v: unknown) => (v === "" ? undefined : v);
+
+/**
+ * Shared list/pagination query schema used by /api/articles and
+ * (via `threadsListQuerySchema` below) /api/forum/threads. Coerces
+ * from strings, returns sensible defaults, and rejects garbage
+ * instead of letting `Number()` produce `NaN` that crashes Postgres
+ * downstream — SQLMap probes like `?page=' OR 1=1--` were surfacing
+ * as raw 500s before this schema.
+ *
+ * Not applied to /api/tools (returns a hard-coded top-50; no
+ * pagination contract).
+ */
+export const listQuerySchema = z.object({
+  page: z.preprocess(emptyAsUndefined, z.coerce.number().int().positive().max(10_000).default(1)),
+  limit: z.preprocess(emptyAsUndefined, z.coerce.number().int().min(1).max(50).default(20)),
+});
+
+/** Threads-list filter: optional `categoryId` on top of the list params. */
+export const threadsListQuerySchema = listQuerySchema.extend({
+  // `?categoryId=` (empty) should behave like the param wasn't sent —
+  // matches the pre-schema `if (categoryId) { ... }` semantics. Without
+  // the preprocess, z.coerce.number() turns "" into 0, which then fails
+  // .positive() with a 400.
+  categoryId: z.preprocess(emptyAsUndefined, z.coerce.number().int().positive().optional()),
+});
+
+/**
+ * Route-param schemas — applied to `await context.params` via the
+ * `parseParams` helper. Each one rejects path traversal, oversized
+ * input, and shape mismatches at the handler boundary so the DB layer
+ * never sees garbage.
+ */
+const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,98}[a-z0-9])?$/i;
+
+export const slugParamSchema = z.object({
+  slug: z.string().min(1).max(100).regex(SLUG_PATTERN, "must be a URL-safe slug"),
+});
+
+export const idParamSchema = z.object({
+  id: z.string().uuid(),
+});
+
+/** Admin users-list query — optional role filter and limit (1–100). */
+export const adminUsersListQuerySchema = z.object({
+  role: z.enum(["admin", "user"]).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+});

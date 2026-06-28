@@ -10,14 +10,15 @@ import { db } from "@/db";
 import { articles } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import { createArticleSchema } from "@/lib/validators";
+import { createArticleSchema, listQuerySchema } from "@/lib/validators";
 import { generateId } from "@/lib/uuid";
 import { slugify } from "@/lib/utils";
+import { jsonError, parseBody, parseQuery, withErrorHandling } from "@/lib/api-helpers";
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = request.nextUrl;
-  const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
-  const limit = Math.min(50, Math.max(1, Number(searchParams.get("limit") ?? "20")));
+export const GET = withErrorHandling("GET /api/articles", async (request: NextRequest) => {
+  const query = parseQuery(request, listQuerySchema);
+  if (!query.ok) return query.response;
+  const { page, limit } = query.data;
   const offset = (page - 1) * limit;
 
   const results = await db
@@ -29,24 +30,15 @@ export async function GET(request: NextRequest) {
     .offset(offset);
 
   return NextResponse.json(results);
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withErrorHandling("POST /api/articles", async (request: NextRequest) => {
   const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!session?.user?.id) return jsonError("Unauthorized", 401);
 
-  const body = await request.json();
-  const parsed = createArticleSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.flatten() },
-      { status: 400 },
-    );
-  }
-
-  const { title, content, summary, status } = parsed.data;
+  const body = await parseBody(request, createArticleSchema);
+  if (!body.ok) return body.response;
+  const { title, content, summary, status } = body.data;
   const baseSlug = slugify(title) || generateId().slice(0, 8);
   const id = generateId();
 
@@ -75,4 +67,4 @@ export async function POST(request: NextRequest) {
     .returning();
 
   return NextResponse.json(article, { status: 201 });
-}
+});
