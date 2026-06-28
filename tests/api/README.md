@@ -20,10 +20,16 @@ session.
    npm run test:api
    ```
 
-`npm run test:api` resolves to `bru run --env local tests/api`. Bruno picks
-up `tests/api/environments/local.bru` for `{{baseUrl}}`, `{{adminUsername}}`
-and `{{adminPassword}}`. The `_auth/` folder bootstraps a session cookie
-once at the start and Bruno reuses it for any test that needs it.
+`npm run test:api` runs `cd tests/api && bru run --env local` (the Bruno
+CLI refuses to operate outside the collection root). Bruno picks up
+`tests/api/environments/local.bru` for `{{baseUrl}}`, `{{adminUsername}}`,
+`{{adminPassword}}`.
+
+The `zzz_auth/` folder is intentionally sorted **last** in the
+collection — Bruno's cookie jar persists across requests in a single
+run, so a login at the top of the suite would mask every `*-unauthorized`
+test by reusing the admin session. Auth bootstrap runs after the
+unauth probes, which keeps both meaningful.
 
 ## Test category breakdown
 

@@ -11,8 +11,10 @@ get {
 }
 
 script:pre-request {
-  // 2_000-char slug. Should 404 (no match) cleanly, not 414/500.
-  bru.setVar("bigSlug", "a".repeat(2_000));
+  // 2000-char slug. Should 4xx cleanly (slug regex rejection or 414), not 500.
+  // NOTE: esprima (Bruno's JS parser) doesn't grok ES2021 numeric separators,
+  // so `2_000` triggers a parse error — keep the literal plain.
+  bru.setVar("bigSlug", "a".repeat(2000));
 }
 
 tests {
