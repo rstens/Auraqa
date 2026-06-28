@@ -19,7 +19,7 @@ body:form-urlencoded {
 }
 
 tests {
-  test("login flow completes with a 2xx (post follow-redirects)", function() {
+  test("login flow completes (200 JSON or 302 redirect)", function() {
     // NextAuth's callback returns 302 → /, which Bruno's HTTP layer
     // auto-follows. The final response is the rendered home page (200).
     // 302 also passes for clients that don't auto-follow.
