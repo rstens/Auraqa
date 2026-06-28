@@ -146,19 +146,25 @@ jobs:
         # writes inside the container's CWD, not the runner workspace, and
         # the file disappears when the container exits.
         #
-        # Swallow only exit code 1 (findings present) while propagating
-        # any other non-zero exit code.
+        # Capture the exit code via `|| ec=$?` because run blocks default
+        # to `set -e` — without the `||` the script aborts on osv-scanner
+        # exit 1 (findings present) BEFORE the next line can save the
+        # code, which is what was rendering as a red ##[error] in the
+        # run UI. Swallow exit 1 (findings — surfaced via SARIF) and
+        # propagate everything else (network errors, image pull failure,
+        # malformed args).
         continue-on-error: true
         run: |
+          ec=0
           docker run --rm -v "$PWD:/src" -w /src \
             ghcr.io/google/osv-scanner:v2.3.8 \
             scan source \
             --recursive \
             --format=sarif \
             --output-file=osv-scanner.sarif \
-            ./
-          ec=$?
+            ./ || ec=$?
           if [ "$ec" -ne 0 ] && [ "$ec" -ne 1 ]; then
+            echo "::error::osv-scanner exited with code $ec (not a findings exit)"
             exit "$ec"
           fi
           ls -la osv-scanner.sarif || echo "(SARIF not produced)"
