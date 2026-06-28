@@ -483,9 +483,21 @@ describe("listQuerySchema", () => {
     expect(listQuerySchema.safeParse({ limit: "0" }).success).toBe(false);
   });
 
-  it("rejects limit > 50", () => {
+  it("rejects limit values above the 50-row cap", () => {
+    // Hard reject (not silent clamp) so over-eager callers see the error
+    // instead of silently getting fewer rows than they asked for.
     expect(listQuerySchema.safeParse({ limit: "51" }).success).toBe(false);
     expect(listQuerySchema.safeParse({ limit: "1000" }).success).toBe(false);
+  });
+
+  it("treats empty-string page/limit as 'not provided' (use defaults)", () => {
+    // `z.coerce.number()` turns "" into 0, which then fails .positive().
+    // The emptyAsUndefined preprocessor short-circuits that so a request
+    // like `?page=&limit=` falls back to the schema defaults — same
+    // behavior users got before the schema existed.
+    const r = listQuerySchema.safeParse({ page: "", limit: "" });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data).toEqual({ page: 1, limit: 20 });
   });
 
   it("rejects non-integer page/limit", () => {
@@ -513,6 +525,16 @@ describe("threadsListQuerySchema", () => {
 
   it("allows the categoryId param to be absent", () => {
     const r = threadsListQuerySchema.safeParse({});
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.categoryId).toBeUndefined();
+  });
+
+  it("treats empty-string categoryId as 'not provided' (no filter)", () => {
+    // Pre-schema behavior was `if (categoryId) { … }`, which treated ""
+    // as falsy and skipped the filter. The emptyAsUndefined preprocessor
+    // matches that — a 400 here would be a regression for clients that
+    // build query strings from form inputs that may leave the field blank.
+    const r = threadsListQuerySchema.safeParse({ categoryId: "" });
     expect(r.success).toBe(true);
     if (r.success) expect(r.data.categoryId).toBeUndefined();
   });

@@ -17,13 +17,14 @@ import { jsonError, parseBody, parseQuery, withErrorHandling } from "@/lib/api-h
 export const GET = withErrorHandling("GET /api/forum/threads", async (request: NextRequest) => {
   const query = parseQuery(request, threadsListQuerySchema);
   if (!query.ok) return query.response;
-  const { categoryId, limit } = query.data;
+  const { categoryId, page, limit } = query.data;
+  const offset = (page - 1) * limit;
 
   let q = db.select().from(forumThreads);
   if (categoryId !== undefined) {
     q = q.where(eq(forumThreads.categoryId, categoryId)) as typeof q;
   }
-  const results = await q.orderBy(desc(forumThreads.createdAt)).limit(limit);
+  const results = await q.orderBy(desc(forumThreads.createdAt)).limit(limit).offset(offset);
   return NextResponse.json(results);
 });
 
