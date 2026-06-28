@@ -30,6 +30,7 @@ tests {
     // Failed credentials redirect back to /login?error=CredentialsSignin.
     // Successful login redirects to / and the final URL is the home page.
     const finalUrl = String(res.getResponseUrl?.() ?? "");
+    expect(finalUrl).to.not.equal("");
     expect(finalUrl).to.not.match(/\/login(\?|$)/);
   });
 }
