@@ -113,8 +113,12 @@ export const searchQuerySchema = z.object({
  * `?page=' OR 1=1--` were surfacing as raw 500s before this schema.
  */
 export const listQuerySchema = z.object({
-  page: z.coerce.number().int().positive().max(10_000).default(1),
-  limit: z.coerce.number().int().min(1).max(50).default(20),
+  page: z
+    .preprocess((v) => (v === "" ? undefined : v), z.coerce.number().int().positive().max(10_000))
+    .default(1),
+  limit: z
+    .preprocess((v) => (v === "" ? undefined : v), z.coerce.number().int().min(1).max(50))
+    .default(20),
 });
 
 /** Threads-list filter: optional `categoryId` on top of the list params. */
