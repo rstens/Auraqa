@@ -10,10 +10,6 @@ get {
   auth: none
 }
 
-params:query {
-  page: not-a-number
-}
-
 tests {
   test("non-numeric page is rejected with 400, never 500 (regression: SQLMap)", function() {
     expect(res.getStatus()).to.equal(400);

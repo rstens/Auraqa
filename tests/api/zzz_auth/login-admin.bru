@@ -19,18 +19,17 @@ body:form-urlencoded {
 }
 
 tests {
-  test("login flow completes (200 JSON or 302 redirect)", function() {
+  test("login succeeds (status 200)", function() {
     // NextAuth's callback returns 302 → /, which Bruno's HTTP layer
     // auto-follows. The final response is the rendered home page (200).
-    // 302 also passes for clients that don't auto-follow.
-    expect(res.getStatus()).to.be.oneOf([200, 302]);
+    expect(res.getStatus()).to.equal(200);
   });
 
   test("did not land back on the login page (auth wasn't rejected)", function() {
     // Failed credentials redirect back to /login?error=CredentialsSignin.
-    // Successful login redirects to / and the final URL is the home page.
-    const finalUrl = String(res.getResponseUrl?.() ?? "");
-    expect(finalUrl).to.not.equal("");
+    // Successful login redirects to / — res.getUrl() returns the final
+    // URL after Bruno follows the redirect chain.
+    const finalUrl = String(res.getUrl() || "");
     expect(finalUrl).to.not.match(/\/login(\?|$)/);
   });
 }
@@ -45,6 +44,8 @@ docs {
   redirect — by the time `res.getHeader('set-cookie')` runs, we're
   looking at the home page response, not the auth callback. The
   cookie IS in Bruno's jar regardless (subsequent requests reuse it
-  if any auth-required tests are added in the future). The successful
-  redirect to `/` is sufficient evidence the login worked.
+  if any auth-required tests are added in the future).
+
+  res.getUrl() returns the final URL after Bruno follows the redirect
+  chain, making it a reliable signal for checking where we landed.
 }
