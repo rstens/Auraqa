@@ -107,7 +107,7 @@ export const searchQuerySchema = z.object({
 
 /**
  * Shared list/pagination query schema for the public GET endpoints
- * (articles, threads, tools). Coerces from strings, returns sensible
+ * (currently: articles and forum threads). Coerces from strings, returns sensible
  * defaults, and rejects garbage instead of letting `Number()` produce
  * `NaN` that crashes Postgres downstream — SQLMap probes like
  * `?page=' OR 1=1--` were surfacing as raw 500s before this schema.
