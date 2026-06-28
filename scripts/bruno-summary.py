@@ -70,6 +70,32 @@ def request_status(result: dict, failed_assertions: int) -> str:
     return "pass"
 
 
+def normalize(data: object) -> dict | None:
+    """Collapse Bruno's reporter shapes to a single ``{summary?, results}`` dict.
+
+    The JSON reporter has shipped two top-level shapes across versions:
+    - an object ``{"summary": {...}, "results": [...]}`` (older @usebruno/cli)
+    - a bare array of per-request result objects (newer @usebruno/cli) — this
+      is what tripped the summary step with
+      ``'list' object has no attribute 'get'``.
+
+    Some versions further wrap each run as an *iteration* object that carries
+    its own ``results`` array; flatten those too so ``render`` can stay simple.
+    """
+    if data is None or isinstance(data, dict):
+        return data
+    if isinstance(data, list):
+        flat: list = []
+        for item in data:
+            if isinstance(item, dict) and isinstance(item.get("results"), list):
+                flat.extend(item["results"])
+            else:
+                flat.append(item)
+        return {"results": flat}
+    # A scalar (number/string/bool) is not a report we can read.
+    return {"results": []}
+
+
 def render(data: dict | None) -> str:
     out: list[str] = ["## Bruno API Tests", ""]
 
@@ -191,7 +217,7 @@ def main(argv: list[str]) -> int:
         return 0
 
     try:
-        sys.stdout.write(render(data))
+        sys.stdout.write(render(normalize(data)))
     except Exception as e:  # noqa: BLE001 — keep `if: always()` summary safe
         sys.stdout.write("## Bruno API Tests\n\n")
         sys.stdout.write(
