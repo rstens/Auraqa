@@ -10,25 +10,35 @@ import { db } from "@/db";
 import { articles } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import { createArticleSchema } from "@/lib/validators";
+import { createArticleSchema, listQuerySchema } from "@/lib/validators";
 import { generateId } from "@/lib/uuid";
 import { slugify } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = request.nextUrl;
-  const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
-  const limit = Math.min(50, Math.max(1, Number(searchParams.get("limit") ?? "20")));
+  const parsed = listQuerySchema.safeParse(Object.fromEntries(request.nextUrl.searchParams));
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid query parameters", details: parsed.error.flatten() },
+      { status: 400 },
+    );
+  }
+  const { page, limit } = parsed.data;
   const offset = (page - 1) * limit;
 
-  const results = await db
-    .select()
-    .from(articles)
-    .where(eq(articles.status, "published"))
-    .orderBy(desc(articles.publishedAt))
-    .limit(limit)
-    .offset(offset);
+  try {
+    const results = await db
+      .select()
+      .from(articles)
+      .where(eq(articles.status, "published"))
+      .orderBy(desc(articles.publishedAt))
+      .limit(limit)
+      .offset(offset);
 
-  return NextResponse.json(results);
+    return NextResponse.json(results);
+  } catch (err) {
+    console.error("GET /api/articles failed", err);
+    return NextResponse.json({ error: "Failed to list articles" }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {

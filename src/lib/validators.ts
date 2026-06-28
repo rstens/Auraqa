@@ -104,3 +104,20 @@ export const searchQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });
+
+/**
+ * Shared list/pagination query schema for the public GET endpoints
+ * (articles, threads, tools). Coerces from strings, returns sensible
+ * defaults, and rejects garbage instead of letting `Number()` produce
+ * `NaN` that crashes Postgres downstream — SQLMap probes like
+ * `?page=' OR 1=1--` were surfacing as raw 500s before this schema.
+ */
+export const listQuerySchema = z.object({
+  page: z.coerce.number().int().positive().max(10_000).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+
+/** Threads-list filter: optional `categoryId` on top of the list params. */
+export const threadsListQuerySchema = listQuerySchema.extend({
+  categoryId: z.coerce.number().int().positive().optional(),
+});

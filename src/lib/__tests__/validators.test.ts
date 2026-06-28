@@ -14,6 +14,8 @@ import {
   glossaryTermSchema,
   adminAiActionSchema,
   adminSuggestAnswerSchema,
+  listQuerySchema,
+  threadsListQuerySchema,
 } from "../validators";
 
 describe("createArticleSchema", () => {
@@ -454,5 +456,64 @@ describe("adminSuggestAnswerSchema", () => {
 
   it("rejects non-UUID", () => {
     expect(adminSuggestAnswerSchema.safeParse({ threadId: "not-a-uuid" }).success).toBe(false);
+  });
+});
+
+describe("listQuerySchema", () => {
+  it("defaults to page=1, limit=20 when nothing is provided", () => {
+    const r = listQuerySchema.safeParse({});
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data).toEqual({ page: 1, limit: 20 });
+  });
+
+  it("coerces numeric strings", () => {
+    const r = listQuerySchema.safeParse({ page: "3", limit: "10" });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data).toEqual({ page: 3, limit: 10 });
+  });
+
+  it("rejects SQLi-shaped injection probes (regression: SQLMap 500s)", () => {
+    expect(listQuerySchema.safeParse({ page: "' OR 1=1--" }).success).toBe(false);
+    expect(listQuerySchema.safeParse({ limit: "1; DROP TABLE articles;" }).success).toBe(false);
+  });
+
+  it("rejects negative and zero page/limit", () => {
+    expect(listQuerySchema.safeParse({ page: "0" }).success).toBe(false);
+    expect(listQuerySchema.safeParse({ page: "-1" }).success).toBe(false);
+    expect(listQuerySchema.safeParse({ limit: "0" }).success).toBe(false);
+  });
+
+  it("clamps limit to 50 and rejects anything larger", () => {
+    expect(listQuerySchema.safeParse({ limit: "51" }).success).toBe(false);
+    expect(listQuerySchema.safeParse({ limit: "1000" }).success).toBe(false);
+  });
+
+  it("rejects non-integer page/limit", () => {
+    expect(listQuerySchema.safeParse({ page: "1.5" }).success).toBe(false);
+    expect(listQuerySchema.safeParse({ limit: "NaN" }).success).toBe(false);
+  });
+});
+
+describe("threadsListQuerySchema", () => {
+  it("accepts an optional positive-integer categoryId", () => {
+    const r = threadsListQuerySchema.safeParse({ categoryId: "7" });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.categoryId).toBe(7);
+  });
+
+  it("rejects non-numeric categoryId (regression: SQLMap 500s)", () => {
+    expect(threadsListQuerySchema.safeParse({ categoryId: "not-a-number" }).success).toBe(false);
+    expect(threadsListQuerySchema.safeParse({ categoryId: "' OR 1=1--" }).success).toBe(false);
+  });
+
+  it("rejects negative or zero categoryId", () => {
+    expect(threadsListQuerySchema.safeParse({ categoryId: "0" }).success).toBe(false);
+    expect(threadsListQuerySchema.safeParse({ categoryId: "-1" }).success).toBe(false);
+  });
+
+  it("allows the categoryId param to be absent", () => {
+    const r = threadsListQuerySchema.safeParse({});
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.categoryId).toBeUndefined();
   });
 });

@@ -10,22 +10,30 @@ import { db } from "@/db";
 import { forumThreads } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import { createThreadSchema } from "@/lib/validators";
+import { createThreadSchema, threadsListQuerySchema } from "@/lib/validators";
 import { generateId } from "@/lib/uuid";
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = request.nextUrl;
-  const categoryId = searchParams.get("categoryId");
-  const limit = Math.min(50, Math.max(1, Number(searchParams.get("limit") ?? "20")));
-
-  let query = db.select().from(forumThreads);
-  if (categoryId) {
-    query = query.where(eq(forumThreads.categoryId, Number(categoryId))) as typeof query;
+  const parsed = threadsListQuerySchema.safeParse(Object.fromEntries(request.nextUrl.searchParams));
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid query parameters", details: parsed.error.flatten() },
+      { status: 400 },
+    );
   }
+  const { categoryId, limit } = parsed.data;
 
-  const results = await query.orderBy(desc(forumThreads.createdAt)).limit(limit);
-
-  return NextResponse.json(results);
+  try {
+    let query = db.select().from(forumThreads);
+    if (categoryId !== undefined) {
+      query = query.where(eq(forumThreads.categoryId, categoryId)) as typeof query;
+    }
+    const results = await query.orderBy(desc(forumThreads.createdAt)).limit(limit);
+    return NextResponse.json(results);
+  } catch (err) {
+    console.error("GET /api/forum/threads failed", err);
+    return NextResponse.json({ error: "Failed to list threads" }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {
