@@ -483,7 +483,7 @@ describe("listQuerySchema", () => {
     expect(listQuerySchema.safeParse({ limit: "0" }).success).toBe(false);
   });
 
-  it("clamps limit to 50 and rejects anything larger", () => {
+  it("rejects limit > 50", () => {
     expect(listQuerySchema.safeParse({ limit: "51" }).success).toBe(false);
     expect(listQuerySchema.safeParse({ limit: "1000" }).success).toBe(false);
   });
