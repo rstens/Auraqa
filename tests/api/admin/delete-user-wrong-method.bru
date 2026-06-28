@@ -11,10 +11,12 @@ get {
 }
 
 tests {
-  test("GET against a delete endpoint shape is handled (no 500)", function() {
-    // Whether the handler accepts GET (returning 401 because no auth) or
-    // rejects with 405, the point is that the wrong-method probe should
-    // not blow up. Anonymous → 401/403 most likely; 405 is also fine.
-    expect(res.getStatus()).to.be.oneOf([401, 403, 405]);
+  test("probe is handled cleanly (no 500)", function() {
+    // The /api/admin/users/[id] route does define a GET handler, so this
+    // isn't actually a wrong-method probe — it falls through to:
+    //   - 401/403 if isAdmin() rejects, OR
+    //   - 404 if the all-zeros UUID doesn't exist (admin session in jar).
+    // 405 is the answer if the handler is removed in the future.
+    expect(res.getStatus()).to.be.oneOf([401, 403, 404, 405]);
   });
 }

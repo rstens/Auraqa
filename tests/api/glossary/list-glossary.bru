@@ -19,7 +19,9 @@ tests {
     const body = res.getBody();
     expect(body).to.be.an("array");
     if (body.length === 0) return;
-    expect(body[0]).to.have.property("slug");
+    // The API returns Drizzle's `id` (uuid) and the term/definition fields.
+    // There's no `slug` column — the glossary route serves rows verbatim.
+    expect(body[0]).to.have.property("id");
     expect(body[0]).to.have.property("term");
   });
 
