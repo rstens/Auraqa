@@ -239,11 +239,19 @@ jobs:
         run: npm install --no-save --no-audit --no-fund @usebruno/cli@latest
 
       - name: Run Bruno API tests
+        # `bru run` refuses to operate when invoked outside the
+        # collection root — passing `tests/api` as a path errored with
+        # "You can run only at the root of a collection". Switch into
+        # the collection dir via working-directory and write the
+        # reports back to the workspace root with relative paths so
+        # the upload + summary steps below still find them.
+        #
         # continue-on-error so a single failing API assertion doesn't
         # mask the upload-artifact steps below — the report is more
         # useful than the exit code.
         continue-on-error: true
-        run: npx bru run --env ci tests/api --reporter-html bruno-report.html --reporter-json bruno-report.json
+        working-directory: tests/api
+        run: npx bru run --env ci --reporter-html "$GITHUB_WORKSPACE/bruno-report.html" --reporter-json "$GITHUB_WORKSPACE/bruno-report.json"
 
       - name: Upload Bruno report
         if: always()
