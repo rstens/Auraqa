@@ -123,7 +123,9 @@ export const listQuerySchema = z.object({
 
 /** Threads-list filter: optional `categoryId` on top of the list params. */
 export const threadsListQuerySchema = listQuerySchema.extend({
-  categoryId: z.coerce.number().int().positive().optional(),
+  categoryId: z
+    .preprocess((v) => (v === "" ? undefined : v), z.coerce.number().int().positive())
+    .optional(),
 });
 
 /**
