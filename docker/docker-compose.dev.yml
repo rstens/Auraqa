@@ -27,7 +27,11 @@ services:
     environment:
       NODE_ENV: development
       AUTH_TRUST_HOST: "true"
-    command: sh -c "npx drizzle-kit push && npx tsx src/db/seed.ts && npm run dev"
+    # `--force` + tolerant `||` so `push` never blocks or aborts on a TTY
+    # confirmation prompt in this non-interactive container; the dev server
+    # still starts even if push can't fully converge. See the migrate service
+    # in docker-compose.yml for the full rationale.
+    command: sh -c "npx drizzle-kit push --force || echo '[dev] drizzle-kit push did not fully converge (non-interactive); continuing'; npx tsx src/db/seed.ts && npm run dev"
   # The migrate service builds from the same Dockerfile.dev — point it at
   # the same cached image so we cache once, not twice. Only the entrypoint
   # differs (defined in docker-compose.yml).
