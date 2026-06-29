@@ -11,11 +11,30 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { db } from "@/db";
 import { articles, users, articleTags, tags } from "@/db/schema";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, count, inArray } from "drizzle-orm";
 import { timeAgo } from "@/lib/utils";
 import { renderMarkdown } from "@/lib/markdown";
 
-export default async function ArticlesPage() {
+const PAGE_SIZE = 20;
+
+export default async function ArticlesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  // Total published count drives the page math. Clamp the requested page into
+  // [1, totalPages] so an out-of-range ?page= lands on the last page instead of
+  // an empty list.
+  const [{ value: total }] = await db
+    .select({ value: count() })
+    .from(articles)
+    .where(eq(articles.status, "published"));
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const requestedPage = Number.parseInt((await searchParams).page ?? "1", 10);
+  const page = Math.min(Math.max(Number.isNaN(requestedPage) ? 1 : requestedPage, 1), totalPages);
+  const offset = (page - 1) * PAGE_SIZE;
+
   const articleList = await db
     .select({
       id: articles.id,
@@ -36,12 +55,18 @@ export default async function ArticlesPage() {
     .leftJoin(users, eq(articles.authorId, users.id))
     .where(eq(articles.status, "published"))
     .orderBy(desc(articles.publishedAt))
-    .limit(20);
+    .limit(PAGE_SIZE)
+    .offset(offset);
 
-  const allArticleTags = await db
-    .select({ articleId: articleTags.articleId, tagName: tags.name })
-    .from(articleTags)
-    .innerJoin(tags, eq(articleTags.tagId, tags.id));
+  // Scope the tag lookup to the articles actually on this page.
+  const pageArticleIds = articleList.map((a) => a.id);
+  const allArticleTags = pageArticleIds.length
+    ? await db
+        .select({ articleId: articleTags.articleId, tagName: tags.name })
+        .from(articleTags)
+        .innerJoin(tags, eq(articleTags.tagId, tags.id))
+        .where(inArray(articleTags.articleId, pageArticleIds))
+    : [];
 
   const tagsByArticle = new Map<string, string[]>();
   for (const row of allArticleTags) {
@@ -86,7 +111,48 @@ export default async function ArticlesPage() {
           ))
         )}
       </div>
+
+      {totalPages > 1 && <Pagination page={page} totalPages={totalPages} />}
     </div>
+  );
+}
+
+function Pagination({ page, totalPages }: { page: number; totalPages: number }) {
+  const linkClass =
+    "rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800";
+  const disabledClass =
+    "cursor-not-allowed rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-300 dark:border-slate-800 dark:text-slate-600";
+
+  return (
+    <nav
+      data-testid="articles-pagination"
+      aria-label="Articles pagination"
+      className="mt-8 flex items-center justify-between border-t border-slate-200 pt-6 dark:border-slate-700"
+    >
+      {page > 1 ? (
+        <Link data-testid="pagination-prev" href={`/articles?page=${page - 1}`} className={linkClass}>
+          ← Previous
+        </Link>
+      ) : (
+        <span data-testid="pagination-prev" aria-disabled="true" className={disabledClass}>
+          ← Previous
+        </span>
+      )}
+
+      <span data-testid="pagination-status" className="text-sm text-slate-600 dark:text-slate-400">
+        Page {page} of {totalPages}
+      </span>
+
+      {page < totalPages ? (
+        <Link data-testid="pagination-next" href={`/articles?page=${page + 1}`} className={linkClass}>
+          Next →
+        </Link>
+      ) : (
+        <span data-testid="pagination-next" aria-disabled="true" className={disabledClass}>
+          Next →
+        </span>
+      )}
+    </nav>
   );
 }
 
