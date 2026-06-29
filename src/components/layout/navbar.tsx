@@ -6,9 +6,15 @@
  */
 
 import Link from "next/link";
+import { auth } from "@/lib/auth";
 import { UserMenu } from "./user-menu";
 
-export function Navbar() {
+export async function Navbar() {
+  // Resolve the session server-side so the header reflects auth state on the
+  // first render after a login/logout redirect (see UserMenu for why this
+  // beats client-side useSession here).
+  const session = await auth();
+
   return (
     <header
       data-testid="navbar"
@@ -42,7 +48,7 @@ export function Navbar() {
           >
             <SearchIcon />
           </Link>
-          <UserMenu />
+          <UserMenu user={session?.user ?? null} />
 
           {/* Mobile menu button */}
           <MobileMenuButton />

@@ -1,19 +1,34 @@
 /**
- * User menu component for the navbar.
+ * User menu for the navbar.
  *
- * Shows sign-in link for unauthenticated users, or a dropdown
- * with profile/settings/sign-out for authenticated users.
+ * The signed-in user is resolved on the server (via `auth()` in the
+ * Navbar) and passed in as a prop, rather than read from the client
+ * `useSession()`. This is deliberate: after a credentials/OAuth login the
+ * server action redirects and the navbar re-renders server-side with the
+ * fresh session cookie, so the header switches to the user's name on the
+ * very next render — no manual refresh. `useSession()` would lag here
+ * because its provider seeds state once on mount and does not re-sync
+ * across the post-login RSC navigation.
+ *
+ * Only the dropdown (open/close) and sign-out remain client-side.
  */
 
 "use client";
 
-import { useSession, signOut } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { UserAvatar } from "@/components/shared/user-avatar";
 
-export function UserMenu() {
-  const { data: session, status } = useSession();
+export type MenuUser = {
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  username?: string | null;
+  role?: string | null;
+};
+
+export function UserMenu({ user }: { user: MenuUser | null }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -27,16 +42,7 @@ export function UserMenu() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  if (status === "loading") {
-    return (
-      <div
-        data-testid="user-menu-loading"
-        className="h-8 w-8 animate-pulse rounded-full bg-slate-200 dark:bg-slate-700"
-      />
-    );
-  }
-
-  if (!session?.user) {
+  if (!user) {
     return (
       <Link
         href="/login"
@@ -48,12 +54,10 @@ export function UserMenu() {
     );
   }
 
-  // Label the button with whoever is signed in. `useSession()` is reactive,
-  // so this swaps from "Sign In" to the user's name the moment the session
-  // updates after login — no page reload needed. Prefer the username, then
-  // the display name, then the email local-part.
-  const displayName =
-    session.user.username || session.user.name || session.user.email?.split("@")[0] || "Account";
+  // Label the button with whoever is signed in: username → display name →
+  // email local-part. This is the server-resolved user, so it is correct
+  // immediately on the first render after login.
+  const displayName = user.username || user.name || user.email?.split("@")[0] || "Account";
 
   return (
     <div className="relative" ref={menuRef}>
@@ -62,7 +66,7 @@ export function UserMenu() {
         onClick={() => setOpen(!open)}
         className="flex items-center gap-2 rounded-full pr-2 transition-opacity hover:opacity-80"
       >
-        <UserAvatar src={session.user.image} name={session.user.name} size="sm" />
+        <UserAvatar src={user.image} name={user.name} size="sm" />
         <span className="max-w-[10rem] truncate text-sm font-medium text-slate-700 dark:text-slate-200">
           {displayName}
         </span>
@@ -74,13 +78,11 @@ export function UserMenu() {
           className="absolute right-0 mt-2 w-48 rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800"
         >
           <div className="border-b border-slate-200 px-4 py-2 dark:border-slate-700">
-            <p className="text-sm font-medium text-slate-900 dark:text-white">
-              {session.user.name}
-            </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{session.user.email}</p>
+            <p className="text-sm font-medium text-slate-900 dark:text-white">{user.name}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{user.email}</p>
           </div>
           <Link
-            href={`/profile/${(session.user as unknown as Record<string, unknown>).username ?? session.user.name}`}
+            href={`/profile/${user.username ?? user.name}`}
             data-testid="user-menu-profile"
             className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
             onClick={() => setOpen(false)}
@@ -95,7 +97,7 @@ export function UserMenu() {
           >
             Settings
           </Link>
-          {(session.user as unknown as Record<string, unknown>).role === "admin" && (
+          {user.role === "admin" && (
             <Link
               href="/admin"
               data-testid="user-menu-admin"
