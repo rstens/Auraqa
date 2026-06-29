@@ -48,14 +48,24 @@ export function UserMenu() {
     );
   }
 
+  // Label the button with whoever is signed in. `useSession()` is reactive,
+  // so this swaps from "Sign In" to the user's name the moment the session
+  // updates after login — no page reload needed. Prefer the username, then
+  // the display name, then the email local-part.
+  const displayName =
+    session.user.username || session.user.name || session.user.email?.split("@")[0] || "Account";
+
   return (
     <div className="relative" ref={menuRef}>
       <button
         data-testid="user-menu-button"
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 rounded-full transition-opacity hover:opacity-80"
+        className="flex items-center gap-2 rounded-full pr-2 transition-opacity hover:opacity-80"
       >
         <UserAvatar src={session.user.image} name={session.user.name} size="sm" />
+        <span className="max-w-[10rem] truncate text-sm font-medium text-slate-700 dark:text-slate-200">
+          {displayName}
+        </span>
       </button>
 
       {open && (
