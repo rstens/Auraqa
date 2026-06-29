@@ -20,6 +20,10 @@ const isCI = !!process.env.CI;
 
 export default defineConfig({
   testDir: "./e2e",
+  // The @seed population scripts (e2e/seed/*.seed.ts) are not tests — they
+  // create content in a running app. Keep them out of `npx playwright test`
+  // and CI entirely; they run only via playwright.seed.config.ts.
+  testIgnore: "**/*.seed.ts",
   timeout: 30000,
   retries: isCI ? 1 : 0,
   reporter: isCI

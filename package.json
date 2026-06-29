@@ -18,6 +18,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "seed:e2e": "playwright test --config=playwright.seed.config.ts",
     "test:api": "bru run --env local tests/api",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
