@@ -38,6 +38,8 @@ export default defineConfig({
         "src/lib/validators.ts",
         "src/lib/glossary-data.ts",
         "src/components/shared/user-avatar.tsx",
+        "src/components/layout/navbar.tsx",
+        "src/components/layout/user-menu.tsx",
       ],
       thresholds: {
         lines: 90,
