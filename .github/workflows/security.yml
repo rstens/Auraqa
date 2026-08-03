@@ -88,7 +88,7 @@ jobs:
             *) echo "ref=refs/heads/$TARGET_BRANCH" >> "$GITHUB_OUTPUT" ;;
           esac
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: "22.x"
           cache: npm
@@ -118,7 +118,7 @@ jobs:
         # other static-analysis tools instead of only living in the
         # `gitleaks-results.sarif.zip` artifact.
         if: always() && hashFiles('results.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@v4.37.4
         continue-on-error: true
         with:
           sarif_file: results.sarif
@@ -171,7 +171,7 @@ jobs:
 
       - name: Upload OSV-Scanner SARIF to Security tab
         if: always() && hashFiles('osv-scanner.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@v4.37.4
         continue-on-error: true
         with:
           sarif_file: osv-scanner.sarif
@@ -191,7 +191,7 @@ jobs:
 
       - name: Upload Trivy FS SARIF
         if: always() && hashFiles('trivy-fs.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@v4.37.4
         continue-on-error: true
         with:
           sarif_file: trivy-fs.sarif
@@ -222,7 +222,7 @@ jobs:
 
       - name: Upload Semgrep SARIF
         if: inputs.intensity != 'smoke' && always() && hashFiles('semgrep.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@v4.37.4
         continue-on-error: true
         with:
           sarif_file: semgrep.sarif
@@ -245,7 +245,7 @@ jobs:
 
       - name: Upload Trivy image SARIF
         if: inputs.intensity != 'smoke' && always() && hashFiles('trivy-image.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@v4.37.4
         continue-on-error: true
         with:
           sarif_file: trivy-image.sarif
